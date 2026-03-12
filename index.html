@@ -5,129 +5,260 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>星賀・船越 青物攻略チェックアプリ</title>
   <style>
+    :root {
+      --bg: #eef3f8;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #dbe3ec;
+      --primary: #0f172a;
+      --primary2: #1d4ed8;
+      --ok: #166534;
+      --okbg: #dcfce7;
+      --mid: #92400e;
+      --midbg: #fef3c7;
+      --bad: #991b1b;
+      --badbg: #fee2e2;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 0;
-      background: #f4f7fb;
-      color: #1f2937;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
     }
+
     .wrap {
-      max-width: 760px;
+      max-width: 780px;
       margin: 0 auto;
-      padding: 16px;
+      padding: 14px;
     }
+
     h1 {
-      font-size: 22px;
-      margin: 0 0 8px;
+      margin: 0 0 6px;
+      font-size: 24px;
+      line-height: 1.2;
     }
+
     h2 {
-      font-size: 18px;
       margin: 0 0 12px;
+      font-size: 18px;
+      line-height: 1.3;
     }
+
     .sub {
-      color: #6b7280;
-      font-size: 14px;
-      margin-bottom: 16px;
-    }
-    .panel {
-      background: #fff;
-      border-radius: 16px;
-      padding: 16px;
+      color: var(--muted);
+      font-size: 13px;
       margin-bottom: 14px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
     }
+
+    .panel {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+      border: 1px solid rgba(15, 23, 42, 0.04);
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .hero .small {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .score {
+      font-size: 30px;
+      font-weight: 800;
+      margin: 6px 0 10px;
+      letter-spacing: 1px;
+    }
+
+    .label {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .label.good {
+      background: var(--okbg);
+      color: var(--ok);
+    }
+
+    .label.mid {
+      background: var(--midbg);
+      color: var(--mid);
+    }
+
+    .label.bad {
+      background: var(--badbg);
+      color: var(--bad);
+    }
+
+    .hero .label {
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+    }
+
+    .meta {
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
     .row {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
       align-items: center;
     }
-    select, button {
+
+    select,
+    button {
       font-size: 16px;
       padding: 10px 12px;
       border-radius: 10px;
-      border: 1px solid #d1d5db;
+    }
+
+    select {
+      border: 1px solid var(--line);
       background: #fff;
+      color: var(--text);
     }
+
     button {
-      background: #111827;
-      color: #fff;
       border: none;
+      background: var(--primary);
+      color: #fff;
       cursor: pointer;
+      font-weight: 700;
     }
+
     button.secondary {
       background: #e5e7eb;
       color: #111827;
     }
+
     .status {
-      font-size: 14px;
-      color: #4b5563;
       margin-top: 8px;
-    }
-    .score {
-      font-size: 26px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-    .label {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
       font-size: 13px;
-      font-weight: 600;
-      background: #e0f2fe;
-      color: #075985;
-      margin-bottom: 10px;
+      color: var(--muted);
     }
-    .meta {
-      font-size: 14px;
-      line-height: 1.7;
-      color: #374151;
+
+    .grid2 {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fbfcfe;
+    }
+
+    .stat .k {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .stat .v {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
     .week-grid {
       display: grid;
       gap: 10px;
     }
+
     .day-card {
-      border: 1px solid #e5e7eb;
+      border: 1px solid var(--line);
       border-radius: 14px;
       padding: 12px;
       background: #fcfcfd;
     }
+
     .day-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 8px;
       margin-bottom: 6px;
     }
+
     .day-date {
-      font-weight: 700;
+      font-weight: 800;
+      font-size: 15px;
     }
+
     .day-stars {
+      font-weight: 800;
       font-size: 20px;
-      font-weight: 700;
     }
-    .small {
-      font-size: 13px;
-      color: #6b7280;
-    }
+
     .method {
       margin-top: 6px;
       font-size: 14px;
-      font-weight: 600;
-      color: #111827;
+      font-weight: 700;
     }
-    .footer-note {
-      font-size: 12px;
-      color: #6b7280;
-      line-height: 1.6;
+
+    .divider {
+      height: 1px;
+      background: var(--line);
+      margin: 12px 0;
+    }
+
+    .bullet {
+      margin-top: 6px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 600px) {
+      .grid2 {
+        grid-template-columns: 1fr;
+      }
+
+      .score {
+        font-size: 28px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>星賀・船越 青物攻略チェックアプリ</h1>
-    <div class="sub">前日予測 / 当日判断 / 1週間おすすめ</div>
+    <div class="sub">前日予測 / 当日判断 / 今日から1週間おすすめ</div>
+
+    <div class="panel hero">
+      <h2>今日の結論</h2>
+      <div id="heroLabel" class="label">短時間様子見</div>
+      <div id="heroScore" class="score">★★</div>
+      <div id="heroMethod" class="meta">おすすめ：カゴ＋泳がせ</div>
+      <div id="heroComment" class="meta">潮まずまず。風良い。ベイト期待。</div>
+      <div class="small" id="heroNote">星賀・船越ごとの補正を反映しています。</div>
+    </div>
 
     <div class="panel">
       <div class="row">
@@ -138,8 +269,32 @@
         </select>
 
         <button id="refreshBtn">おすすめを更新</button>
+        <button id="fetchBtn" class="secondary">データ更新</button>
       </div>
       <div class="status" id="statusText">初期表示中です。</div>
+    </div>
+
+    <div class="panel">
+      <h2>実データ</h2>
+      <div class="grid2">
+        <div class="stat">
+          <div class="k">潮</div>
+          <div class="v" id="liveTide">唐津 4101 / 未取得</div>
+        </div>
+        <div class="stat">
+          <div class="k">風</div>
+          <div class="v" id="liveWind">未取得</div>
+        </div>
+        <div class="stat">
+          <div class="k">水温</div>
+          <div class="v" id="liveTemp">未取得</div>
+        </div>
+        <div class="stat">
+          <div class="k">おすすめ釣法</div>
+          <div class="v" id="liveMethod">未計算</div>
+        </div>
+      </div>
+      <div class="status" id="liveDataNote">現在は仮データ更新です。次段階で MSIL / 風 / 水温 API に接続します。</div>
     </div>
 
     <div class="panel">
@@ -158,10 +313,10 @@
     </div>
 
     <div class="panel">
-      <div class="footer-note">
-        現段階は「判定アルゴリズムの土台」です。<br>
-        次段階で、潮汐は MSIL、風は予報API、水温は海況データへ接続します。<br>
-        釣法は「カゴ / 餌 / ルアー / 泳がせ」を独立で扱っています。
+      <div class="small">
+        現段階は判定アルゴリズムの土台です。<br>
+        釣法は「カゴ / 餌 / ルアー / 泳がせ」を独立で扱っています。<br>
+        次段階で、潮は MSIL、風と水温は外部データと接続します。
       </div>
     </div>
   </div>
@@ -170,13 +325,15 @@
     const spotRules = {
       seiga: {
         name: "星賀漁港",
-        weights: { tide: 3, mazume: 3, wind: 2, temp: 2, bait: 3, surface: 3, method: 2 },
         tendency: "回遊待ち重視。潮・まずめ・ベイト・海面変化を強く評価。",
+        tideStation: "唐津 / 4101",
+        weights: { tide: 3, mazume: 3, wind: 2, temp: 2, bait: 3, surface: 3, method: 2 }
       },
       funakoshi: {
         name: "船越漁港",
-        weights: { tide: 2, mazume: 2, wind: 3, temp: 2, bait: 2, surface: 2, method: 3 },
         tendency: "風と立ち位置相性を重視。潮が弱い日でも釣法の工夫を評価。",
+        tideStation: "唐津 / 4101",
+        weights: { tide: 2, mazume: 2, wind: 3, temp: 2, bait: 2, surface: 2, method: 3 }
       }
     };
 
@@ -189,7 +346,7 @@
     function fmtDate(d) {
       const m = d.getMonth() + 1;
       const day = d.getDate();
-      const w = ["日","月","火","水","木","金","土"][d.getDay()];
+      const w = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
       return `${m}/${day}（${w}）`;
     }
 
@@ -206,32 +363,24 @@
     }
 
     function todayJudgeLabel(score) {
-      if (score >= 15) return "GO";
-      if (score >= 11) return "朝夕まずめだけGO";
-      if (score >= 7) return "短時間様子見";
-      return "見送り";
+      if (score >= 15) return { text: "GO", cls: "good" };
+      if (score >= 11) return { text: "朝夕まずめだけGO", cls: "mid" };
+      if (score >= 7) return { text: "短時間様子見", cls: "mid" };
+      return { text: "見送り", cls: "bad" };
     }
 
     function tomorrowJudgeLabel(score) {
-      if (score >= 13) return "本命日";
-      if (score >= 9) return "候補日";
-      if (score >= 6) return "短時間候補";
-      return "見送り寄り";
+      if (score >= 13) return { text: "本命日", cls: "good" };
+      if (score >= 9) return { text: "候補日", cls: "mid" };
+      if (score >= 6) return { text: "短時間候補", cls: "mid" };
+      return { text: "見送り寄り", cls: "bad" };
     }
 
     function methodRecommend(input) {
-      if (input.bait >= 2 && input.surface >= 2 && input.tide >= 2) {
-        return "カゴ＋泳がせ";
-      }
-      if (input.bait >= 2 && input.surface >= 2) {
-        return "ルアー＋泳がせ";
-      }
-      if (input.tide >= 2 && input.mazume >= 2) {
-        return "カゴ＋餌";
-      }
-      if (input.surface >= 2) {
-        return "ルアー短時間";
-      }
+      if (input.bait >= 2 && input.surface >= 2 && input.tide >= 2) return "カゴ＋泳がせ";
+      if (input.bait >= 2 && input.surface >= 2) return "ルアー＋泳がせ";
+      if (input.tide >= 2 && input.mazume >= 2) return "カゴ＋餌";
+      if (input.surface >= 2) return "ルアー短時間";
       return "餌＋カゴ";
     }
 
@@ -244,6 +393,7 @@
 
     function commentText(input, spot) {
       const parts = [];
+
       if (input.tide >= 2) parts.push("潮が動く");
       else if (input.tide === 1) parts.push("潮まずまず");
       else parts.push("潮弱い");
@@ -272,6 +422,7 @@
 
     function calcWeightedDay(input, spot) {
       const w = spotRules[spot].weights;
+
       const raw =
         input.tide * w.tide +
         input.mazume * w.mazume +
@@ -282,6 +433,7 @@
         input.method * w.method;
 
       const score = normalizeWeightedScore(raw);
+
       return {
         raw,
         score,
@@ -289,14 +441,13 @@
         band: bandLabel(score),
         method: methodRecommend(input),
         timeBand: timeBand(input),
-        comment: commentText(input, spot),
+        comment: commentText(input, spot)
       };
     }
 
     function buildDummyWeekData(spot) {
-      // まずはダミー。
-      // 次段階で MSIL / 風 / 水温 API に置換。
       const base = new Date();
+
       const patterns = spot === "seiga"
         ? [
             { tide: 3, mazume: 3, wind: 2, temp: 2, bait: 2, surface: 2, method: 2 },
@@ -305,7 +456,7 @@
             { tide: 2, mazume: 1, wind: 2, temp: 2, bait: 1, surface: 1, method: 2 },
             { tide: 3, mazume: 2, wind: 2, temp: 2, bait: 3, surface: 2, method: 3 },
             { tide: 2, mazume: 2, wind: 2, temp: 1, bait: 2, surface: 2, method: 2 },
-            { tide: 1, mazume: 0, wind: 1, temp: 1, bait: 0, surface: 0, method: 1 },
+            { tide: 1, mazume: 0, wind: 1, temp: 1, bait: 0, surface: 0, method: 1 }
           ]
         : [
             { tide: 2, mazume: 2, wind: 3, temp: 2, bait: 2, surface: 1, method: 3 },
@@ -314,26 +465,31 @@
             { tide: 2, mazume: 2, wind: 2, temp: 2, bait: 2, surface: 1, method: 3 },
             { tide: 3, mazume: 2, wind: 2, temp: 2, bait: 2, surface: 2, method: 3 },
             { tide: 2, mazume: 2, wind: 3, temp: 1, bait: 1, surface: 1, method: 2 },
-            { tide: 1, mazume: 0, wind: 1, temp: 1, bait: 0, surface: 0, method: 1 },
+            { tide: 1, mazume: 0, wind: 1, temp: 1, bait: 0, surface: 0, method: 1 }
           ];
 
       return patterns.map((p, i) => ({
         date: addDays(base, i),
         input: p,
-        result: calcWeightedDay(p, spot),
+        result: calcWeightedDay(p, spot)
       }));
     }
 
-    function renderSummary(box, title, score, label, result, tendency) {
+    function renderLabel(obj) {
+      return `<span class="label ${obj.cls}">${obj.text}</span>`;
+    }
+
+    function renderSummary(boxId, title, labelObj, result, tendency) {
+      const box = document.getElementById(boxId);
       box.innerHTML = `
-        <div class="label">${label}</div>
+        ${renderLabel(labelObj)}
         <div class="score">${result.stars}</div>
         <div class="meta">
           <div><strong>${title}</strong></div>
-          <div>時間帯：${result.timeBand}</div>
-          <div>おすすめ釣法：${result.method}</div>
-          <div>コメント：${result.comment}</div>
-          <div class="small">補正：${tendency}</div>
+          <div class="bullet">時間帯：${result.timeBand}</div>
+          <div class="bullet">おすすめ釣法：${result.method}</div>
+          <div class="bullet">コメント：${result.comment}</div>
+          <div class="small" style="margin-top:8px;">補正：${tendency}</div>
         </div>
       `;
     }
@@ -347,10 +503,19 @@
             <div class="day-stars">${day.result.stars}</div>
           </div>
           <div class="small">${day.result.band} / ${day.result.timeBand}</div>
-          <div>${day.result.comment}</div>
+          <div class="bullet">${day.result.comment}</div>
           <div class="method">おすすめ：${day.result.method}</div>
         </div>
       `).join("");
+    }
+
+    function renderHero(today, spot) {
+      const labelObj = todayJudgeLabel(today.result.score + 7);
+      document.getElementById("heroLabel").textContent = labelObj.text;
+      document.getElementById("heroScore").textContent = today.result.stars;
+      document.getElementById("heroMethod").textContent = `おすすめ：${today.result.method}`;
+      document.getElementById("heroComment").textContent = today.result.comment;
+      document.getElementById("heroNote").textContent = `${spotRules[spot].name} / ${spotRules[spot].tendency}`;
     }
 
     function renderAll() {
@@ -361,19 +526,19 @@
       const today = week[0];
       const tomorrow = week[1];
 
+      renderHero(today, spot);
+
       renderSummary(
-        document.getElementById("todayBox"),
+        "todayBox",
         "今日の総合判定",
-        today.result.score,
         todayJudgeLabel(today.result.score + 7),
         today.result,
         tendency
       );
 
       renderSummary(
-        document.getElementById("tomorrowBox"),
+        "tomorrowBox",
         "明日の前日予測",
-        tomorrow.result.score,
         tomorrowJudgeLabel(tomorrow.result.score + 5),
         tomorrow.result,
         tendency
@@ -383,10 +548,38 @@
 
       document.getElementById("statusText").textContent =
         `${spotRules[spot].name} のおすすめを更新しました。現在は判定アルゴリズムの土台表示です。`;
+      document.getElementById("liveTide").textContent = `${spotRules[spot].tideStation} / 未取得`;
+      document.getElementById("liveMethod").textContent = today.result.method;
     }
 
-    document.getElementById("refreshBtn").addEventListener("click", renderAll);
+    function fetchDummyData() {
+      const spot = document.getElementById("spotSelect").value;
+
+      const dummy = spot === "seiga"
+        ? {
+            tide: `${spotRules[spot].tideStation} / 潮まずまず`,
+            wind: "北東 3m/s",
+            temp: "15.8℃",
+            note: "仮データ更新：星賀は回遊待ち前提の想定です。"
+          }
+        : {
+            tide: `${spotRules[spot].tideStation} / 潮良好`,
+            wind: "北 2m/s",
+            temp: "16.2℃",
+            note: "仮データ更新：船越は風と立ち位置重視の想定です。"
+          };
+
+      document.getElementById("liveTide").textContent = dummy.tide;
+      document.getElementById("liveWind").textContent = dummy.wind;
+      document.getElementById("liveTemp").textContent = dummy.temp;
+      document.getElementById("liveDataNote").textContent =
+        `${dummy.note} 次段階で潮は MSIL、風・水温は実データ接続に置き換えます。`;
+      document.getElementById("statusText").textContent = "実データ欄を更新しました。現在は仮データ表示です。";
+    }
+
     document.getElementById("spotSelect").addEventListener("change", renderAll);
+    document.getElementById("refreshBtn").addEventListener("click", renderAll);
+    document.getElementById("fetchBtn").addEventListener("click", fetchDummyData);
 
     renderAll();
   </script>
