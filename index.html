@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>星賀・船越 青物攻略チェックアプリ Ver.2.1</title>
+<title>星賀・船越 青物攻略チェックアプリ Ver.2.2</title>
 <style>
   :root{
     --bg:#eef3f8;
@@ -161,7 +161,8 @@
   .stat .v{
     font-size:15px;
     font-weight:700;
-    line-height:1.5;
+    line-height:1.6;
+    white-space:pre-line;
   }
   .week-grid{
     display:grid;
@@ -287,8 +288,8 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>星賀・船越 青物攻略チェックアプリ Ver.2.1</h1>
-  <div class="sub">前日予測 / 当日判断 / 1週間おすすめ / 実データ / 風向判定 / 潮位差ロジック / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正</div>
+  <h1>星賀・船越 青物攻略チェックアプリ Ver.2.2</h1>
+  <div class="sub">前日予測 / 当日判断 / 1週間おすすめ / 実データ / 風向判定 / 潮位差ロジック / 満潮・干潮 / 潮名 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正</div>
 
   <div class="panel hero">
     <h2>今日の結論</h2>
@@ -453,7 +454,7 @@
 </div>
 
 <script>
-  const LOG_KEY = "seiga-funakoshi-log-v21";
+  const LOG_KEY = "seiga-funakoshi-log-v22";
 
   const spotRules = {
     hoshiga: {
@@ -574,6 +575,13 @@
     return `${m}/${day}（${w}）`;
   }
 
+  function fmtTime(dateObj) {
+    if (!(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) return "--:--";
+    const h = String(dateObj.getHours()).padStart(2, "0");
+    const m = String(dateObj.getMinutes()).padStart(2, "0");
+    return `${h}:${m}`;
+  }
+
   function getLogs() {
     try {
       return JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
@@ -641,6 +649,14 @@
     }
 
     return { normal, rocket, live, overall, comment };
+  }
+
+  function getTideName(range) {
+    if (range >= 140) return "大潮";
+    if (range >= 100) return "中潮";
+    if (range >= 60) return "小潮";
+    if (range >= 40) return "長潮";
+    return "若潮";
   }
 
   function getTideRangeScoreSet(tideRangeCm) {
@@ -727,7 +743,7 @@
     return "様子見";
   }
 
-  function evaluateFishingConditionV21({ place, windDir16, windSpeed, tideRangeCm, ai = null, timeBand = "朝" }) {
+  function evaluateFishingConditionV22({ place, windDir16, windSpeed, tideRangeCm, ai = null, timeBand = "朝" }) {
     const safePlace = (place === "hoshiga" || place === "funakoshi") ? place : "hoshiga";
     const safeDir = DIRECTIONS_16.includes(windDir16) ? windDir16 : "N";
     const windBase = WIND_TABLE[safePlace][safeDir];
@@ -792,6 +808,22 @@
     };
   }
 
+  function extractTideEvents(points) {
+    const highs = [];
+    const lows = [];
+
+    for (let i = 1; i < points.length - 1; i++) {
+      const prev = points[i - 1].level;
+      const curr = points[i].level;
+      const next = points[i + 1].level;
+
+      if (curr > prev && curr >= next) highs.push(points[i]);
+      if (curr < prev && curr <= next) lows.push(points[i]);
+    }
+
+    return { highs, lows };
+  }
+
   function analyzeTideDay(raw, dateObj) {
     if (!raw || !raw.time || !Array.isArray(raw.tide) || raw.tide.length === 0) return null;
 
@@ -817,13 +849,28 @@
     const morningMove = (l5 != null && l8 != null) ? Math.abs(l8 - l5) : 0;
     const eveningMove = (l15 != null && l18 != null) ? Math.abs(l18 - l15) : 0;
 
+    const events = extractTideEvents(points);
+    const highTimes = events.highs.slice(0, 2).map(p => fmtTime(p.time));
+    const lowTimes = events.lows.slice(0, 2).map(p => fmtTime(p.time));
+    const tideName = getTideName(range);
+
     return {
       date: ymd(dateObj),
       stationCode: raw.stationCode,
       range,
       morningMove: Math.round(morningMove),
-      eveningMove: Math.round(eveningMove)
+      eveningMove: Math.round(eveningMove),
+      tideName,
+      highTimes,
+      lowTimes
     };
+  }
+
+  function tideDetailText(tideDay) {
+    if (!tideDay) return "潮データ未取得";
+    const highs = tideDay.highTimes?.length ? tideDay.highTimes.join(" / ") : "--:--";
+    const lows = tideDay.lowTimes?.length ? tideDay.lowTimes.join(" / ") : "--:--";
+    return `${tideDay.tideName} / 潮差 ${tideDay.range}cm / 満潮 ${highs} / 干潮 ${lows}`;
   }
 
   async function fetchTideForDate(spot, dateObj) {
@@ -967,7 +1014,7 @@
   function renderSummary(boxId, title, result, tideDay, dayType = "today") {
     const box = document.getElementById(boxId);
     const tideExtra = tideDay
-      ? `潮差：${tideDay.range}cm / 朝潮動き ${tideDay.morningMove}cm / 夕潮動き ${tideDay.eveningMove}cm`
+      ? `${tideDay.tideName} / 潮差 ${tideDay.range}cm / 満潮 ${tideDay.highTimes.join("・") || "--:--"} / 干潮 ${tideDay.lowTimes.join("・") || "--:--"}`
       : "潮データ未取得";
 
     const labelObj = scoreToOverallLabel(result.overall.score);
@@ -983,7 +1030,7 @@
         <div class="bullet">泳がせ：${result.liveBait.label}</div>
         <div class="bullet">コメント：${result.comments.join("。")}</div>
         <div class="bullet">潮詳細：${tideExtra}</div>
-        <div class="small" style="margin-top:8px;">${dayType === "today" ? "当日判断" : "前日予測"}は、風向・風速・潮位差を反映しています。</div>
+        <div class="small" style="margin-top:8px;">${dayType === "today" ? "当日判断" : "前日予測"}は、風向・風速・潮位差・潮名・満潮干潮を反映しています。</div>
       </div>
     `;
   }
@@ -996,6 +1043,8 @@
     box.innerHTML = weekList.map(day => {
       const fish = scoreFishSpecies(spot, day.result, day.tideDay, ai);
       const labelObj = scoreToOverallLabel(day.result.overall.score);
+      const highs = day.tideDay?.highTimes?.join(" / ") || "--:--";
+      const lows = day.tideDay?.lowTimes?.join(" / ") || "--:--";
 
       return `
         <div class="day-card">
@@ -1006,7 +1055,9 @@
           <div>${renderLabel(labelObj)}</div>
           <div class="bullet">おすすめ：${day.result.flowMethod}</div>
           <div class="bullet">通常カゴ ${day.result.normalKago.label} / 遠投ロケットカゴ ${day.result.rocketKago.label} / 泳がせ ${day.result.liveBait.label}</div>
-          <div class="bullet">潮差：${day.tideDay ? day.tideDay.range : "-"}cm / 朝 ${day.tideDay ? day.tideDay.morningMove : "-"}cm / 夕 ${day.tideDay ? day.tideDay.eveningMove : "-"}cm</div>
+          <div class="bullet">潮：${day.tideDay ? day.tideDay.tideName : "-"} / 潮差 ${day.tideDay ? day.tideDay.range : "-"}cm</div>
+          <div class="bullet">満潮 ${highs}</div>
+          <div class="bullet">干潮 ${lows}</div>
           <div class="bullet">期待魚種：${fish.first} / ${fish.second}</div>
           <div class="bullet">${day.result.comments.slice(0,2).join("。")}</div>
         </div>
@@ -1048,7 +1099,7 @@
     const dir16 = degTo16Dir(windDeg);
     const tideRangeCm = tideDay?.range ?? 80;
 
-    return evaluateFishingConditionV21({
+    return evaluateFishingConditionV22({
       place: spot,
       windDir16: dir16,
       windSpeed: Number(windSpeed) || 4,
@@ -1076,7 +1127,14 @@
           };
         })
       : Array.from({ length: 7 }).map((_, i) => {
-          const dummyTide = { range: 80, morningMove: 15, eveningMove: 18 };
+          const dummyTide = {
+            range: 80,
+            morningMove: 15,
+            eveningMove: 18,
+            tideName: "小潮",
+            highTimes: ["06:00","18:00"],
+            lowTimes: ["12:00","--:--"]
+          };
           const result = buildCurrentResult(spot, dummyTide, windDeg, windSpeed, i % 2 === 0 ? "朝" : "夕");
           return {
             date: addDays(new Date(), i),
@@ -1094,11 +1152,11 @@
     renderFishSpecies(spot, todayResult, liveState.tideToday);
 
     document.getElementById("statusText").textContent =
-      `${spotRules[spot].name} のおすすめを更新しました。風向・風速・潮位差・3系統判定・期待魚種・AI補正を反映しています。`;
+      `${spotRules[spot].name} のおすすめを更新しました。風向・風速・潮位差・潮名・満潮干潮・3系統判定・期待魚種・AI補正を反映しています。`;
 
     document.getElementById("liveTide").textContent =
       liveState.tideToday
-        ? `${spotRules[spot].tideStation} / 潮差 ${liveState.tideToday.range}cm / 朝 ${liveState.tideToday.morningMove}cm / 夕 ${liveState.tideToday.eveningMove}cm`
+        ? `${spotRules[spot].tideStation} / 潮差 ${liveState.tideToday.range}cm / ${liveState.tideToday.tideName}\n満潮 ${liveState.tideToday.highTimes.join(" / ") || "--:--"}\n干潮 ${liveState.tideToday.lowTimes.join(" / ") || "--:--"}`
         : `${spotRules[spot].tideStation} / 未取得`;
 
     document.getElementById("liveWind").textContent =
