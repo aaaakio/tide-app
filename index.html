@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>星賀・船越 青物攻略チェックアプリ</title>
+<title>星賀・船越 青物攻略チェックアプリ Ver.2.1</title>
 <style>
   :root{
     --bg:#eef3f8;
@@ -258,31 +258,52 @@
     color:#3730a3;
     margin-bottom:6px;
   }
+  .tri-grid{
+    display:grid;
+    gap:10px;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .tri-card{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px;
+    background:#fbfcfe;
+  }
+  .tri-card .k{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  .tri-card .v{
+    font-size:15px;
+    font-weight:800;
+    line-height:1.5;
+  }
   @media (max-width:700px){
-    .grid2,.grid3{grid-template-columns:1fr}
+    .grid2,.grid3,.tri-grid{grid-template-columns:1fr}
     .score{font-size:28px}
   }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>星賀・船越 青物攻略チェックアプリ</h1>
-  <div class="sub">前日予測 / 当日判断 / 1週間おすすめ / 実データ / 水温実データ / 期待魚種 / 魚種ごとのおすすめ釣法 / 釣果ログ / 簡易AI補正</div>
+  <h1>星賀・船越 青物攻略チェックアプリ Ver.2.1</h1>
+  <div class="sub">前日予測 / 当日判断 / 1週間おすすめ / 実データ / 風向判定 / 潮位差ロジック / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正</div>
 
   <div class="panel hero">
     <h2>今日の結論</h2>
     <div id="heroLabel" class="label">短時間様子見</div>
-    <div id="heroScore" class="score">★★</div>
-    <div id="heroMethod" class="meta">おすすめ：カゴ＋泳がせ</div>
-    <div id="heroComment" class="meta">潮まずまず。風良い。ベイト期待。</div>
-    <div class="small" id="heroNote">星賀・船越ごとの補正を反映しています。</div>
+    <div id="heroScore" class="score">★★★☆☆</div>
+    <div id="heroMethod" class="meta">おすすめ：通常カゴ → 泳がせ</div>
+    <div id="heroComment" class="meta">風・潮位差を反映して判定しています。</div>
+    <div class="small" id="heroNote">星賀・船越ごとの風向補正を反映しています。</div>
   </div>
 
   <div class="panel">
     <div class="row">
       <label for="spotSelect">場所</label>
       <select id="spotSelect" style="max-width:220px;">
-        <option value="seiga">星賀漁港</option>
+        <option value="hoshiga">星賀漁港</option>
         <option value="funakoshi">船越漁港</option>
       </select>
       <button id="refreshBtn">おすすめを更新</button>
@@ -307,11 +328,29 @@
         <div class="v" id="liveTemp">未取得</div>
       </div>
       <div class="stat">
-        <div class="k">おすすめ釣法</div>
+        <div class="k">総合おすすめ</div>
         <div class="v" id="liveMethod">未計算</div>
       </div>
     </div>
     <div class="status" id="liveDataNote">潮は MSIL、水温は Open-Meteo Marine、風は Open-Meteo Weather から取得します。</div>
+  </div>
+
+  <div class="panel">
+    <h2>釣法別判定</h2>
+    <div class="tri-grid" id="method3Box">
+      <div class="tri-card">
+        <div class="k">通常カゴ</div>
+        <div class="v">未計算</div>
+      </div>
+      <div class="tri-card">
+        <div class="k">遠投ロケットカゴ</div>
+        <div class="v">未計算</div>
+      </div>
+      <div class="tri-card">
+        <div class="k">泳がせ</div>
+        <div class="v">未計算</div>
+      </div>
+    </div>
   </div>
 
   <div class="panel">
@@ -361,7 +400,7 @@
       <div>
         <label class="small">場所</label>
         <select id="logSpot">
-          <option value="seiga">星賀漁港</option>
+          <option value="hoshiga">星賀漁港</option>
           <option value="funakoshi">船越漁港</option>
         </select>
       </div>
@@ -377,10 +416,11 @@
       <div>
         <label class="small">釣法</label>
         <select id="logMethod">
-          <option value="カゴ">カゴ</option>
-          <option value="餌">餌</option>
-          <option value="ルアー">ルアー</option>
+          <option value="通常カゴ">通常カゴ</option>
+          <option value="遠投ロケットカゴ">遠投ロケットカゴ</option>
           <option value="泳がせ">泳がせ</option>
+          <option value="ルアー">ルアー</option>
+          <option value="餌">餌</option>
         </select>
       </div>
       <div>
@@ -393,7 +433,7 @@
       </div>
       <div>
         <label class="small">サイズ・魚種</label>
-        <input type="text" id="logFish" placeholder="例：ヤズ 45cm" />
+        <input type="text" id="logFish" placeholder="例：ネリゴ 38cm" />
       </div>
     </div>
 
@@ -413,52 +453,92 @@
 </div>
 
 <script>
-  const LOG_KEY = "seiga-funakoshi-log-v5";
+  const LOG_KEY = "seiga-funakoshi-log-v21";
 
   const spotRules = {
-    seiga: {
+    hoshiga: {
       name: "星賀漁港",
-      tendency: "回遊待ち重視。潮・まずめ・ベイト・海面変化を強く評価。",
+      tendency: "回遊待ち重視。北〜北東系と潮位差を強めに評価。",
       tideStation: "唐津 / 4101",
       lat: 33.413,
       lon: 129.873,
-      favorableDirs: ["北東", "東", "南東"],
-      badDirs: ["北西"],
       fishBase: {
+        "ネリゴ": 4,
         "ヤズ / ハマチ": 3,
         "サゴシ": 2,
-        "ネリゴ": 1,
         "ヒラマサ": 2
       },
       fishMethodMap: {
-        "ヤズ / ハマチ": "カゴ＋泳がせ",
-        "サゴシ": "ルアー",
         "ネリゴ": "泳がせ＋ルアー",
+        "ヤズ / ハマチ": "通常カゴ＋泳がせ",
+        "サゴシ": "ルアー",
         "ヒラマサ": "泳がせ本命"
-      },
-      weights: { tide: 3, mazume: 3, wind: 2, temp: 2, bait: 3, surface: 3, method: 2 }
+      }
     },
     funakoshi: {
       name: "船越漁港",
-      tendency: "風と立ち位置相性を重視。潮が弱い日でも釣法の工夫を評価。",
+      tendency: "安定型。北〜北東系を重視しつつ、湾内向けに少し穏やかに判定。",
       tideStation: "唐津 / 4101",
       lat: 33.452,
       lon: 129.969,
-      favorableDirs: ["南", "南東", "東"],
-      badDirs: ["北"],
       fishBase: {
+        "ネリゴ": 4,
         "ヤズ / ハマチ": 3,
         "サゴシ": 2,
-        "ネリゴ": 2,
         "ヒラマサ": 1
       },
       fishMethodMap: {
-        "ヤズ / ハマチ": "カゴ＋泳がせ",
-        "サゴシ": "ルアー短時間",
         "ネリゴ": "泳がせ",
-        "ヒラマサ": "泳がせ＋カゴ待ち"
-      },
-      weights: { tide: 2, mazume: 2, wind: 3, temp: 2, bait: 2, surface: 2, method: 3 }
+        "ヤズ / ハマチ": "通常カゴ＋泳がせ",
+        "サゴシ": "ルアー短時間",
+        "ヒラマサ": "泳がせ＋通常カゴ待ち"
+      }
+    }
+  };
+
+  const DIRECTIONS_16 = [
+    "N", "NNE", "NE", "ENE",
+    "E", "ESE", "SE", "SSE",
+    "S", "SSW", "SW", "WSW",
+    "W", "WNW", "NW", "NNW"
+  ];
+
+  const WIND_TABLE = {
+    hoshiga: {
+      N:   { normal: 2, rocket: 1, live: 2, overall: 2 },
+      NNE: { normal: 2, rocket: 1, live: 2, overall: 2 },
+      NE:  { normal: 2, rocket: 1, live: 2, overall: 2 },
+      ENE: { normal: 1, rocket: 1, live: 1, overall: 1 },
+      E:   { normal: 1, rocket: 0, live: 0, overall: 0 },
+      ESE: { normal: 0, rocket: 0, live: 0, overall: 0 },
+      SE:  { normal: -1, rocket: -1, live: -2, overall: -2 },
+      SSE: { normal: -1, rocket: -1, live: -2, overall: -2 },
+      S:   { normal: -1, rocket: -1, live: -2, overall: -2 },
+      SSW: { normal: -1, rocket: -1, live: -2, overall: -2 },
+      SW:  { normal: 0, rocket: -1, live: -1, overall: -1 },
+      WSW: { normal: 0, rocket: -1, live: -1, overall: -1 },
+      W:   { normal: 1, rocket: 0, live: 0, overall: 0 },
+      WNW: { normal: 1, rocket: 1, live: 1, overall: 1 },
+      NW:  { normal: 1, rocket: 1, live: 2, overall: 2 },
+      NNW: { normal: 2, rocket: 1, live: 2, overall: 2 }
+    },
+    funakoshi: {
+      N:   { normal: 2, rocket: 1, live: 2, overall: 2 },
+      NNE: { normal: 2, rocket: 1, live: 2, overall: 2 },
+      NE:  { normal: 2, rocket: 1, live: 2, overall: 2 },
+      ENE: { normal: 1, rocket: 1, live: 1, overall: 1 },
+      E:   { normal: 1, rocket: 0, live: 1, overall: 1 },
+      ESE: { normal: 0, rocket: 0, live: 0, overall: 0 },
+      SE:  { normal: -1, rocket: -1, live: -2, overall: -2 },
+      SSE: { normal: -1, rocket: -1, live: -2, overall: -2 },
+      S:   { normal: -1, rocket: -1, live: -2, overall: -2 },
+      SSW: { normal: -1, rocket: -1, live: -2, overall: -2 },
+      SW:  { normal: 0, rocket: -1, live: -1, overall: -1 },
+      WSW: { normal: 0, rocket: -1, live: -1, overall: -1 },
+      W:   { normal: 1, rocket: 0, live: 1, overall: 1 },
+      WNW: { normal: 1, rocket: 1, live: 1, overall: 1 },
+      NW:  { normal: 1, rocket: 1, live: 1, overall: 1 },
+      NNW: { normal: 2, rocket: 1, live: 2, overall: 2 }
     }
   };
 
@@ -494,45 +574,6 @@
     return `${m}/${day}（${w}）`;
   }
 
-  function starText(score) {
-    if (score >= 8) return "★★★";
-    if (score >= 5) return "★★";
-    return "★";
-  }
-
-  function bandLabel(score) {
-    if (score >= 8) return "本命";
-    if (score >= 5) return "候補";
-    return "見送り寄り";
-  }
-
-  function todayJudgeLabel(score) {
-    if (score >= 15) return { text: "GO", cls: "good" };
-    if (score >= 11) return { text: "朝夕まずめだけGO", cls: "mid" };
-    if (score >= 7) return { text: "短時間様子見", cls: "mid" };
-    return { text: "見送り", cls: "bad" };
-  }
-
-  function tomorrowJudgeLabel(score) {
-    if (score >= 13) return { text: "本命日", cls: "good" };
-    if (score >= 9) return { text: "候補日", cls: "mid" };
-    if (score >= 6) return { text: "短時間候補", cls: "mid" };
-    return { text: "見送り寄り", cls: "bad" };
-  }
-
-  function directionLabel(deg) {
-    if (deg == null || Number.isNaN(Number(deg))) return "-";
-    const d = Number(deg);
-    if (d >= 337.5 || d < 22.5) return "北";
-    if (d < 67.5) return "北東";
-    if (d < 112.5) return "東";
-    if (d < 157.5) return "南東";
-    if (d < 202.5) return "南";
-    if (d < 247.5) return "南西";
-    if (d < 292.5) return "西";
-    return "北西";
-  }
-
   function getLogs() {
     try {
       return JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
@@ -545,29 +586,113 @@
     localStorage.setItem(LOG_KEY, JSON.stringify(logs));
   }
 
+  function degTo16Dir(deg) {
+    if (deg == null || Number.isNaN(Number(deg))) return "N";
+    const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+    const index = Math.round(((Number(deg) % 360) / 22.5)) % 16;
+    return dirs[index];
+  }
+
+  function scoreToMethodLabel(score) {
+    if (score >= 4) return "かなり有望";
+    if (score >= 2) return "有望";
+    if (score >= 0) return "条件次第";
+    if (score >= -2) return "やや厳しい";
+    return "厳しい";
+  }
+
+  function scoreToOverallLabel(score) {
+    if (score >= 5) return { text:"GO", cls:"good" };
+    if (score >= 3) return { text:"朝夕まずめだけGO", cls:"mid" };
+    if (score >= 1) return { text:"短時間様子見", cls:"mid" };
+    return { text:"見送り", cls:"bad" };
+  }
+
+  function scoreToStars(score) {
+    if (score >= 5) return 5;
+    if (score >= 3) return 4;
+    if (score >= 1) return 3;
+    if (score >= -1) return 2;
+    return 1;
+  }
+
+  function makeStarText(stars) {
+    return "★".repeat(stars) + "☆".repeat(5 - stars);
+  }
+
+  function getWindSpeedScoreSet(windSpeed) {
+    let normal = 0, rocket = 0, live = 0, overall = 0, comment = "";
+
+    if (windSpeed <= 2) {
+      normal = 1; rocket = 1; live = 1; overall = 1;
+      comment = "風は弱く、全体に釣りやすい";
+    } else if (windSpeed <= 5) {
+      normal = 0; rocket = 0; live = 0; overall = 0;
+      comment = "風は標準的";
+    } else if (windSpeed <= 7) {
+      normal = -1; rocket = -1; live = -1; overall = -1;
+      comment = "少し風が強く、釣り方に工夫が必要";
+    } else if (windSpeed <= 9) {
+      normal = -2; rocket = -3; live = -2; overall = -2;
+      comment = "風が強く、特に遠投ロケットカゴは不利";
+    } else {
+      normal = -3; rocket = -4; live = -3; overall = -3;
+      comment = "風がかなり強く、全体に厳しい";
+    }
+
+    return { normal, rocket, live, overall, comment };
+  }
+
+  function getTideRangeScoreSet(tideRangeCm) {
+    let normal = 0, rocket = 0, live = 0, overall = 0, comment = "";
+
+    if (tideRangeCm >= 150) {
+      normal = 2; rocket = 1; live = 2; overall = 2;
+      comment = "潮がよく動く日。アジ確保・回遊期待ともに高め";
+    } else if (tideRangeCm >= 100) {
+      normal = 1; rocket = 1; live = 1; overall = 1;
+      comment = "潮は十分動く。標準以上に期待できる";
+    } else if (tideRangeCm >= 60) {
+      normal = 0; rocket = 0; live = -1; overall = 0;
+      comment = "潮の動きはやや弱い。泳がせは少し慎重";
+    } else {
+      normal = -1; rocket = 0; live = -2; overall = -1;
+      comment = "潮があまり動かず、特に泳がせは厳しめ";
+    }
+
+    return { normal, rocket, live, overall, comment };
+  }
+
   function buildAiProfile(spot) {
     const logs = getLogs().filter(l => l.spot === spot);
     const successLogs = logs.filter(l => l.result === "釣れた" || l.result === "反応あり");
 
-    const methodScore = { "カゴ": 0, "餌": 0, "ルアー": 0, "泳がせ": 0 };
-    const timeScore = { "朝": 0, "昼": 0, "夕": 0, "夜": 0 };
-    const fishScore = { "ヤズ / ハマチ": 0, "サゴシ": 0, "ネリゴ": 0, "ヒラマサ": 0 };
+    const methodScore = {
+      "通常カゴ":0,
+      "遠投ロケットカゴ":0,
+      "泳がせ":0,
+      "ルアー":0,
+      "餌":0
+    };
+    const timeScore = { "朝":0, "昼":0, "夕":0, "夜":0 };
+    const fishScore = { "ネリゴ":0, "ヤズ / ハマチ":0, "サゴシ":0, "ヒラマサ":0 };
 
     successLogs.forEach(l => {
-      methodScore[l.method] = (methodScore[l.method] || 0) + (l.result === "釣れた" ? 2 : 1);
-      timeScore[l.timeBand] = (timeScore[l.timeBand] || 0) + (l.result === "釣れた" ? 2 : 1);
+      const p = l.result === "釣れた" ? 2 : 1;
+      methodScore[l.method] = (methodScore[l.method] || 0) + p;
+      timeScore[l.timeBand] = (timeScore[l.timeBand] || 0) + p;
 
       Object.keys(fishScore).forEach(f => {
-        const keyA = f.split(" / ")[0];
-        const keyB = f.split(" / ")[1] || "";
-        if ((l.fish || "").includes(keyA) || (keyB && (l.fish || "").includes(keyB))) {
-          fishScore[f] += (l.result === "釣れた" ? 2 : 1);
+        const a = f.split(" / ")[0];
+        const b = f.split(" / ")[1] || "";
+        if ((l.fish || "").includes(a) || (b && (l.fish || "").includes(b))) {
+          fishScore[f] += p;
         }
       });
     });
 
-    const bestMethod = Object.entries(methodScore).sort((a,b) => b[1] - a[1])[0];
-    const bestTime = Object.entries(timeScore).sort((a,b) => b[1] - a[1])[0];
+    const bestMethod = Object.entries(methodScore).sort((a,b)=>b[1]-a[1])[0];
+    const bestTime = Object.entries(timeScore).sort((a,b)=>b[1]-a[1])[0];
 
     return {
       count: logs.length,
@@ -578,96 +703,92 @@
     };
   }
 
-  function aiMethodBonus(method, ai) {
-    if (!ai.bestMethod) return 0;
-    return method.includes(ai.bestMethod) ? 1 : 0;
+  function aiBonus(methodKey, timeBand, ai) {
+    let bonus = 0;
+    if (ai.bestMethod && methodKey === ai.bestMethod) bonus += 1;
+    if (ai.bestTime && timeBand === ai.bestTime) bonus += 1;
+    return bonus;
   }
 
-  function aiTimeBonus(timeBandText, ai) {
-    if (!ai.bestTime) return 0;
-    return timeBandText.includes(ai.bestTime) ? 1 : 0;
-  }
-
-  function methodRecommend(input) {
-    if (input.bait >= 2 && input.surface >= 2 && input.tide >= 2) return "カゴ＋泳がせ";
-    if (input.bait >= 2 && input.surface >= 2) return "ルアー＋泳がせ";
-    if (input.tide >= 2 && input.mazume >= 2) return "カゴ＋餌";
-    if (input.surface >= 2) return "ルアー短時間";
-    return "餌＋カゴ";
-  }
-
-  function timeBand(input) {
-    if (input.mazume >= 3) return "朝本命";
-    if (input.mazume === 2) return "夕方候補";
-    if (input.mazume === 1) return "朝夕候補";
-    return "終日弱め";
-  }
-
-  function normalizeWeightedScore(raw) {
-    if (raw >= 80) return 9;
-    if (raw >= 62) return 7;
-    if (raw >= 46) return 5;
-    if (raw >= 30) return 3;
-    return 1;
-  }
-
-  function commentText(input, spot, extras = {}) {
-    const parts = [];
-    if (input.tide >= 3) parts.push("潮かなり動く");
-    else if (input.tide >= 2) parts.push("潮が動く");
-    else if (input.tide === 1) parts.push("潮まずまず");
-    else parts.push("潮弱い");
-
-    if (input.wind >= 3) parts.push("風かなり良い");
-    else if (input.wind === 2) parts.push("風良い");
-    else if (input.wind === 1) parts.push("風やや不利");
-    else parts.push("風不利");
-
-    if (input.temp >= 2) parts.push("水温安定");
-    else if (input.temp === 1) parts.push("水温やや変動");
-    else parts.push("水温変化大");
-
-    if (spot === "seiga") {
-      if (input.bait >= 2) parts.push("ベイト期待");
-      if (input.surface >= 2) parts.push("海面変化あり");
-    } else {
-      if (input.method >= 2) parts.push("釣法の自由度あり");
+  function methodFlowFrom3(normalLabel, rocketLabel, liveLabel, overallScore) {
+    if (liveLabel === "かなり有望" || liveLabel === "有望") {
+      if (normalLabel === "かなり有望" || normalLabel === "有望") {
+        return "通常カゴ → 泳がせ";
+      }
+      if (rocketLabel === "かなり有望" || rocketLabel === "有望") {
+        return "遠投ロケットカゴ → 泳がせ";
+      }
+      return "泳がせ本命";
     }
 
-    if (extras.tempText) parts.push(extras.tempText);
-    return parts.join("。");
+    if (normalLabel === "かなり有望" || normalLabel === "有望") return "通常カゴ";
+    if (rocketLabel === "かなり有望" || rocketLabel === "有望") return "遠投ロケットカゴ";
+    if (overallScore >= 1) return "通常カゴ短時間";
+    return "様子見";
   }
 
-  function calcWeightedDay(input, spot, extras = {}) {
-    const w = spotRules[spot].weights;
-    const ai = buildAiProfile(spot);
+  function evaluateFishingConditionV21({ place, windDir16, windSpeed, tideRangeCm, ai = null, timeBand = "朝" }) {
+    const safePlace = (place === "hoshiga" || place === "funakoshi") ? place : "hoshiga";
+    const safeDir = DIRECTIONS_16.includes(windDir16) ? windDir16 : "N";
+    const windBase = WIND_TABLE[safePlace][safeDir];
+    const speedSet = getWindSpeedScoreSet(Number(windSpeed) || 0);
+    const tideSet = getTideRangeScoreSet(Number(tideRangeCm) || 0);
 
-    const tempMethod = methodRecommend(input);
-    const tempTime = timeBand(input);
+    let normalScore = windBase.normal + speedSet.normal + tideSet.normal;
+    let rocketScore = windBase.rocket + speedSet.rocket + tideSet.rocket;
+    let liveScore = windBase.live + speedSet.live + tideSet.live;
+    let overallRaw = windBase.overall + speedSet.overall + tideSet.overall;
 
-    let raw =
-      input.tide * w.tide +
-      input.mazume * w.mazume +
-      input.wind * w.wind +
-      input.temp * w.temp +
-      input.bait * w.bait +
-      input.surface * w.surface +
-      input.method * w.method;
+    if (ai) {
+      normalScore += aiBonus("通常カゴ", timeBand, ai);
+      rocketScore += aiBonus("遠投ロケットカゴ", timeBand, ai);
+      liveScore += aiBonus("泳がせ", timeBand, ai);
+      overallRaw += Math.min(aiBonus("通常カゴ", timeBand, ai), 1);
+    }
 
-    raw += aiMethodBonus(tempMethod, ai) * 6;
-    raw += aiTimeBonus(tempTime, ai) * 5;
+    const overallScore = overallRaw + (normalScore >= 2 ? 1 : 0) + (liveScore >= 3 ? 1 : 0);
+    const overallLabel = scoreToOverallLabel(overallScore);
+    const stars = scoreToStars(overallScore);
 
-    const score = normalizeWeightedScore(raw);
+    const normalLabel = scoreToMethodLabel(normalScore);
+    const rocketLabel = scoreToMethodLabel(rocketScore);
+    const liveLabel = scoreToMethodLabel(liveScore);
+    const methodFlow = methodFlowFrom3(normalLabel, rocketLabel, liveLabel, overallScore);
+
+    const comments = [];
+    comments.push(`${spotRules[safePlace].name}・風向 ${safeDir} を反映`);
+    comments.push(`風：${speedSet.comment}`);
+    comments.push(`潮位差：${tideSet.comment}`);
+
+    if (windBase.overall >= 2) comments.push("風向はかなり有利");
+    else if (windBase.overall >= 1) comments.push("風向はまずまず良い");
+    else if (windBase.overall <= -1) comments.push("風向は不利寄り");
+
+    if (normalScore >= rocketScore && normalScore >= liveScore) {
+      comments.push("まず通常カゴでアジ確保から入りやすい");
+    }
+    if (rocketScore >= 2) comments.push("近場反応が弱ければ遠投ロケットカゴ投入が有効");
+    else if (rocketScore <= -2) comments.push("遠投ロケットカゴは風の影響を受けやすい");
+    if (liveScore >= 3) comments.push("アジ確保後の泳がせ移行に期待できる");
+    else if (liveScore <= -2) comments.push("泳がせは短時間判断向き");
 
     return {
-      raw,
-      score,
-      stars: starText(score),
-      band: bandLabel(score),
-      method: tempMethod,
-      timeBand: tempTime,
-      comment: commentText(input, spot, extras),
-      ai
+      place: safePlace,
+      windDir16: safeDir,
+      windSpeed: Number(windSpeed) || 0,
+      tideRangeCm: Number(tideRangeCm) || 0,
+      normalKago: { score: normalScore, label: normalLabel },
+      rocketKago: { score: rocketScore, label: rocketLabel },
+      liveBait: { score: liveScore, label: liveLabel },
+      overall: {
+        score: overallScore,
+        label: overallLabel.text,
+        cls: overallLabel.cls,
+        stars,
+        starText: makeStarText(stars)
+      },
+      flowMethod: methodFlow,
+      comments
     };
   }
 
@@ -695,22 +816,13 @@
     const l15 = levelAtHour(15), l18 = levelAtHour(18);
     const morningMove = (l5 != null && l8 != null) ? Math.abs(l8 - l5) : 0;
     const eveningMove = (l15 != null && l18 != null) ? Math.abs(l18 - l15) : 0;
-    const mazumeMove = Math.max(morningMove, eveningMove);
-
-    let tideLevel = 0;
-    if (range >= 140 || mazumeMove >= 45) tideLevel = 3;
-    else if (range >= 90 || mazumeMove >= 25) tideLevel = 2;
-    else if (range >= 50 || mazumeMove >= 10) tideLevel = 1;
-    else tideLevel = 0;
 
     return {
       date: ymd(dateObj),
       stationCode: raw.stationCode,
       range,
       morningMove: Math.round(morningMove),
-      eveningMove: Math.round(eveningMove),
-      mazumeMove: Math.round(mazumeMove),
-      tideLevel
+      eveningMove: Math.round(eveningMove)
     };
   }
 
@@ -739,7 +851,7 @@
     const info = spotRules[spot];
     const url =
       `https://api.open-meteo.com/v1/forecast?latitude=${info.lat}&longitude=${info.lon}` +
-      `&current=wind_speed_10m,wind_direction_10m&timezone=Asia%2FTokyo&forecast_days=8`;
+      `&current=wind_speed_10m,wind_direction_10m&daily=wind_speed_10m_max,wind_direction_10m_dominant&timezone=Asia%2FTokyo&forecast_days=8`;
     const res = await fetch(url);
     if (!res.ok) throw new Error("風取得失敗");
     return await res.json();
@@ -749,195 +861,51 @@
     const info = spotRules[spot];
     const url =
       `https://marine-api.open-meteo.com/v1/marine?latitude=${info.lat}&longitude=${info.lon}` +
-      `&current=sea_surface_temperature&hourly=sea_surface_temperature` +
-      `&timezone=Asia%2FTokyo&past_days=1&forecast_days=8`;
+      `&current=sea_surface_temperature&timezone=Asia%2FTokyo&forecast_days=8`;
     const res = await fetch(url);
     if (!res.ok) throw new Error("水温取得失敗");
     return await res.json();
   }
 
-  function windLevelFromCurrent(speed, dir, spot) {
-    const dirText = directionLabel(dir);
-    const rule = spotRules[spot];
-
-    let base = 1;
-    if (speed <= 3) base = 3;
-    else if (speed <= 6) base = 2;
-    else if (speed <= 9) base = 1;
-    else base = 0;
-
-    if (rule.favorableDirs.includes(dirText)) base += 1;
-    if (rule.badDirs.includes(dirText)) base -= 1;
-
-    if (base > 3) base = 3;
-    if (base < 0) base = 0;
-
-    return {
-      level: base,
-      dirText,
-      speed,
-      text: `${dirText} ${speed ?? "-"} m/s`
-    };
-  }
-
-  function extractYesterdaySameHourTemp(marineJson) {
+  function tempDisplayFromMarine(marineJson) {
     const current = marineJson.current?.sea_surface_temperature;
-    const nowTime = marineJson.current?.time;
-    const times = marineJson.hourly?.time || [];
-    const temps = marineJson.hourly?.sea_surface_temperature || [];
-    if (!nowTime || !Array.isArray(times) || !Array.isArray(temps)) return { current, prev: null };
-
-    const now = new Date(nowTime);
-    const target = new Date(now);
-    target.setDate(target.getDate() - 1);
-
-    const iso = target.toISOString().slice(0, 13);
-    const idx = times.findIndex(t => String(t).slice(0, 13) === iso);
-
+    if (current == null || Number.isNaN(Number(current))) {
+      return { text: "未取得", value: null };
+    }
     return {
-      current,
-      prev: idx >= 0 ? temps[idx] : null
+      text: `${Number(current).toFixed(1)}℃`,
+      value: Number(current)
     };
   }
 
-  function tempLevelFromMarine(currentTemp, yesterdaySameHourTemp) {
-    if (currentTemp == null) return { level: 1, text: "未取得", diff: null };
-
-    let diff = null;
-    if (yesterdaySameHourTemp != null) diff = Number((currentTemp - yesterdaySameHourTemp).toFixed(1));
-
-    let level = 1;
-    if (diff == null) level = 1;
-    else if (Math.abs(diff) <= 0.7) level = 2;
-    else if (Math.abs(diff) <= 1.5) level = 1;
-    else level = 0;
-
-    const text = diff == null
-      ? `${currentTemp.toFixed(1)}℃`
-      : `${currentTemp.toFixed(1)}℃ / 前日差 ${diff > 0 ? "+" : ""}${diff.toFixed(1)}℃`;
-
-    return { level, text, diff };
-  }
-
-  function computeTodayInput(spot) {
-    const tide = liveState.tideToday;
-    const wind = liveState.windCurrent;
-    const temp = liveState.tempCurrent;
-
-    const input = {
-      tide: tide?.tideLevel ?? 1,
-      mazume: tide ? (tide.mazumeMove >= 45 ? 3 : tide.mazumeMove >= 20 ? 2 : tide.mazumeMove >= 8 ? 1 : 0) : 1,
-      wind: wind?.level ?? 1,
-      temp: temp?.level ?? 1,
-      bait: spot === "seiga" ? ((tide?.tideLevel ?? 1) >= 2 ? 2 : 1) : 1,
-      surface: tide ? (tide.range >= 140 ? 3 : tide.range >= 90 ? 2 : tide.range >= 50 ? 1 : 0) : 1,
-      method: spot === "seiga" ? 2 : 3
-    };
-
-    const extras = {
-      tempText: temp?.diff != null ? (Math.abs(temp.diff) <= 0.7 ? "水温安定" : "水温変動あり") : ""
-    };
-
-    return { input, extras };
-  }
-
-  function computeTomorrowInput(spot) {
-    const tide = liveState.tideTomorrow;
-    const wind = liveState.windCurrent;
-    const temp = liveState.tempCurrent;
-
-    const input = {
-      tide: tide?.tideLevel ?? 1,
-      mazume: tide ? (tide.mazumeMove >= 45 ? 3 : tide.mazumeMove >= 20 ? 2 : tide.mazumeMove >= 8 ? 1 : 0) : 1,
-      wind: wind?.level ?? 1,
-      temp: temp?.level ?? 1,
-      bait: spot === "seiga" ? ((tide?.tideLevel ?? 1) >= 2 ? 2 : 1) : 1,
-      surface: tide ? (tide.range >= 140 ? 3 : tide.range >= 90 ? 2 : tide.range >= 50 ? 1 : 0) : 1,
-      method: spot === "seiga" ? 2 : 3
-    };
-
-    const extras = {
-      tempText: temp?.diff != null ? (Math.abs(temp.diff) <= 0.7 ? "水温安定" : "水温変動あり") : ""
-    };
-
-    return { input, extras };
-  }
-
-  function buildWeekInputs(spot) {
-    return liveState.tideWeek.map((tideDay, i) => {
-      const wind = liveState.windCurrent;
-      const temp = liveState.tempCurrent;
-
-      const input = {
-        tide: tideDay?.tideLevel ?? 1,
-        mazume: tideDay ? (tideDay.mazumeMove >= 45 ? 3 : tideDay.mazumeMove >= 20 ? 2 : tideDay.mazumeMove >= 8 ? 1 : 0) : 1,
-        wind: wind?.level ?? 1,
-        temp: temp?.level ?? 1,
-        bait: spot === "seiga" ? ((tideDay?.tideLevel ?? 1) >= 2 ? 2 : 1) : (i % 3 === 0 ? 2 : 1),
-        surface: tideDay ? (tideDay.range >= 140 ? 3 : tideDay.range >= 90 ? 2 : tideDay.range >= 50 ? 1 : 0) : 1,
-        method: i % 4 === 0 ? 3 : 2
-      };
-
-      const extras = {
-        tempText: temp?.diff != null ? (Math.abs(temp.diff) <= 0.7 ? "水温安定" : "水温変動あり") : ""
-      };
-
-      return {
-        date: addDays(new Date(), i),
-        tideDay,
-        input,
-        result: calcWeightedDay(input, spot, extras)
-      };
-    });
-  }
-
-  function scoreFishSpecies(spot, result, tideDay, ai) {
+  function scoreFishSpecies(spot, evalResult, tideDay, ai) {
     const base = { ...spotRules[spot].fishBase };
-    const method = result.method;
-    const timeBand = result.timeBand;
-    const tideStrong = (tideDay?.range || 0) >= 90;
-    const mazumeStrong = (tideDay?.mazumeMove || 0) >= 20;
-    const windGood = (liveState.windCurrent?.level || 1) >= 2;
-    const tempStable = (liveState.tempCurrent?.level || 1) >= 1;
 
-    if (tideStrong) {
+    if ((tideDay?.range || 0) >= 100) {
       base["ヤズ / ハマチ"] += 2;
       base["ヒラマサ"] += 1;
-    }
-    if (mazumeStrong) {
-      base["ヤズ / ハマチ"] += 2;
-      base["サゴシ"] += 1;
       base["ネリゴ"] += 1;
     }
-    if (windGood) {
+    if ((tideDay?.morningMove || 0) >= 20) {
       base["サゴシ"] += 1;
-      base["ヤズ / ハマチ"] += 1;
-    }
-    if (tempStable) {
       base["ヤズ / ハマチ"] += 1;
       base["ネリゴ"] += 1;
     }
-
-    if (method.includes("泳がせ")) {
-      base["ヒラマサ"] += 2;
+    if (evalResult.liveBait.score >= 2) {
       base["ネリゴ"] += 2;
+      base["ヒラマサ"] += 2;
       base["ヤズ / ハマチ"] += 1;
     }
-    if (method.includes("ルアー")) {
-      base["サゴシ"] += 2;
-      base["ヤズ / ハマチ"] += 1;
-    }
-    if (method.includes("カゴ")) {
+    if (evalResult.normalKago.score >= 2) {
       base["ヤズ / ハマチ"] += 2;
     }
-
-    if (timeBand.includes("朝")) {
+    if (evalResult.rocketKago.score >= 2) {
+      base["ヤズ / ハマチ"] += 1;
       base["サゴシ"] += 1;
-      base["ヤズ / ハマチ"] += 1;
     }
-    if (timeBand.includes("夕")) {
-      base["ヤズ / ハマチ"] += 1;
+    if ((liveState.tempCurrent?.value || 0) >= 18) {
       base["ネリゴ"] += 1;
+      base["ヤズ / ハマチ"] += 1;
     }
 
     Object.keys(ai.fishScore || {}).forEach(f => {
@@ -952,9 +920,10 @@
     };
   }
 
-  function renderFishSpecies(spot, result, tideDay) {
+  function renderFishSpecies(spot, evalResult, tideDay) {
     const ai = buildAiProfile(spot);
-    const ranked = scoreFishSpecies(spot, result, tideDay, ai);
+    const ranked = scoreFishSpecies(spot, evalResult, tideDay, ai);
+
     document.getElementById("fishBox").innerHTML = `
       <div class="fish-title">本日の期待魚種</div>
       <div class="fish-line">第一候補：${ranked.first}</div>
@@ -965,9 +934,26 @@
     const map = spotRules[spot].fishMethodMap;
     document.getElementById("fishMethodBox").innerHTML = `
       <div class="fish-method-title">魚種ごとのおすすめ釣法</div>
-      <div class="fish-line">${ranked.first} → ${map[ranked.first] || "カゴ＋泳がせ"}</div>
-      <div class="fish-line">${ranked.second} → ${map[ranked.second] || "ルアー＋餌"}</div>
+      <div class="fish-line">${ranked.first} → ${map[ranked.first] || "通常カゴ＋泳がせ"}</div>
+      <div class="fish-line">${ranked.second} → ${map[ranked.second] || "ルアー＋泳がせ"}</div>
       <div class="fish-line">${ranked.big} → ${map[ranked.big] || "泳がせ"}</div>
+    `;
+  }
+
+  function renderMethod3(result) {
+    document.getElementById("method3Box").innerHTML = `
+      <div class="tri-card">
+        <div class="k">通常カゴ</div>
+        <div class="v">${result.normalKago.label}</div>
+      </div>
+      <div class="tri-card">
+        <div class="k">遠投ロケットカゴ</div>
+        <div class="v">${result.rocketKago.label}</div>
+      </div>
+      <div class="tri-card">
+        <div class="k">泳がせ</div>
+        <div class="v">${result.liveBait.label}</div>
+      </div>
     `;
   }
 
@@ -975,21 +961,26 @@
     return `<span class="label ${obj.cls}">${obj.text}</span>`;
   }
 
-  function renderSummary(boxId, title, labelObj, result, tendency, tideDay) {
+  function renderSummary(boxId, title, result, tideDay, dayType = "today") {
     const box = document.getElementById(boxId);
     const tideExtra = tideDay
       ? `潮差：${tideDay.range}cm / 朝潮動き ${tideDay.morningMove}cm / 夕潮動き ${tideDay.eveningMove}cm`
       : "潮データ未取得";
+
+    const labelObj = scoreToOverallLabel(result.overall.score);
+
     box.innerHTML = `
       ${renderLabel(labelObj)}
-      <div class="score">${result.stars}</div>
+      <div class="score">${result.overall.starText}</div>
       <div class="meta">
         <div><strong>${title}</strong></div>
-        <div class="bullet">時間帯：${result.timeBand}</div>
-        <div class="bullet">おすすめ釣法：${result.method}</div>
-        <div class="bullet">コメント：${result.comment}</div>
+        <div class="bullet">おすすめフロー：${result.flowMethod}</div>
+        <div class="bullet">通常カゴ：${result.normalKago.label}</div>
+        <div class="bullet">遠投ロケットカゴ：${result.rocketKago.label}</div>
+        <div class="bullet">泳がせ：${result.liveBait.label}</div>
+        <div class="bullet">コメント：${result.comments.join("。")}</div>
         <div class="bullet">潮詳細：${tideExtra}</div>
-        <div class="small" style="margin-top:8px;">補正：${tendency}</div>
+        <div class="small" style="margin-top:8px;">${dayType === "today" ? "当日判断" : "前日予測"}は、風向・風速・潮位差を反映しています。</div>
       </div>
     `;
   }
@@ -997,33 +988,38 @@
   function renderWeek(weekList) {
     const spot = document.getElementById("spotSelect").value;
     const box = document.getElementById("weekBox");
+    const ai = buildAiProfile(spot);
+
     box.innerHTML = weekList.map(day => {
-      const ai = buildAiProfile(spot);
       const fish = scoreFishSpecies(spot, day.result, day.tideDay, ai);
-      const map = spotRules[spot].fishMethodMap;
+      const labelObj = scoreToOverallLabel(day.result.overall.score);
+
       return `
         <div class="day-card">
           <div class="day-top">
             <div class="day-date">${fmtDate(day.date)}</div>
-            <div class="day-stars">${day.result.stars}</div>
+            <div class="day-stars">${day.result.overall.starText}</div>
           </div>
-          <div class="small">${day.result.band} / ${day.result.timeBand}</div>
-          <div class="bullet">${day.result.comment}</div>
+          <div>${renderLabel(labelObj)}</div>
+          <div class="bullet">おすすめ：${day.result.flowMethod}</div>
+          <div class="bullet">通常カゴ ${day.result.normalKago.label} / 遠投ロケットカゴ ${day.result.rocketKago.label} / 泳がせ ${day.result.liveBait.label}</div>
           <div class="bullet">潮差：${day.tideDay ? day.tideDay.range : "-"}cm / 朝 ${day.tideDay ? day.tideDay.morningMove : "-"}cm / 夕 ${day.tideDay ? day.tideDay.eveningMove : "-"}cm</div>
           <div class="bullet">期待魚種：${fish.first} / ${fish.second}</div>
-          <div class="bullet">魚種別釣法：${fish.first} → ${map[fish.first] || "カゴ＋泳がせ"}</div>
-          <div class="method">おすすめ：${day.result.method}</div>
+          <div class="bullet">${day.result.comments.slice(0,2).join("。")}</div>
         </div>
       `;
     }).join("");
   }
 
-  function renderHero(today, spot) {
-    const labelObj = todayJudgeLabel(today.result.score + 7);
-    document.getElementById("heroLabel").textContent = labelObj.text;
-    document.getElementById("heroScore").textContent = today.result.stars;
-    document.getElementById("heroMethod").textContent = `おすすめ：${today.result.method}`;
-    document.getElementById("heroComment").textContent = today.result.comment;
+  function renderHero(result, spot) {
+    const labelObj = scoreToOverallLabel(result.overall.score);
+    const heroLabel = document.getElementById("heroLabel");
+    heroLabel.textContent = labelObj.text;
+    heroLabel.className = "label";
+
+    document.getElementById("heroScore").textContent = result.overall.starText;
+    document.getElementById("heroMethod").textContent = `おすすめ：${result.flowMethod}`;
+    document.getElementById("heroComment").textContent = result.comments.join("。");
     document.getElementById("heroNote").textContent = `${spotRules[spot].name} / ${spotRules[spot].tendency}`;
   }
 
@@ -1044,34 +1040,73 @@
     `;
   }
 
+  function buildCurrentResult(spot, tideDay, windDeg, windSpeed, timeBand = "朝") {
+    const ai = buildAiProfile(spot);
+    const dir16 = degTo16Dir(windDeg);
+    const tideRangeCm = tideDay?.range ?? 80;
+
+    return evaluateFishingConditionV21({
+      place: spot,
+      windDir16: dir16,
+      windSpeed: Number(windSpeed) || 4,
+      tideRangeCm,
+      ai,
+      timeBand
+    });
+  }
+
   function renderAll() {
     const spot = document.getElementById("spotSelect").value;
-    const tendency = spotRules[spot].tendency;
+    const windDeg = liveState.windCurrent?.deg ?? 45;
+    const windSpeed = liveState.windCurrent?.speed ?? 4.0;
 
-    const todayData = computeTodayInput(spot);
-    const tomorrowData = computeTomorrowInput(spot);
-    const todayResult = calcWeightedDay(todayData.input, spot, todayData.extras);
-    const tomorrowResult = calcWeightedDay(tomorrowData.input, spot, tomorrowData.extras);
-    const weekList = buildWeekInputs(spot);
+    const todayResult = buildCurrentResult(spot, liveState.tideToday, windDeg, windSpeed, "朝");
+    const tomorrowResult = buildCurrentResult(spot, liveState.tideTomorrow || liveState.tideToday, windDeg, windSpeed, "朝");
 
-    renderHero({ result: todayResult }, spot);
-    renderSummary("todayBox", "今日の総合判定", todayJudgeLabel(todayResult.score + 7), todayResult, tendency, liveState.tideToday);
-    renderSummary("tomorrowBox", "明日の前日予測", tomorrowJudgeLabel(tomorrowResult.score + 5), tomorrowResult, tendency, liveState.tideTomorrow);
+    const weekList = liveState.tideWeek.length > 0
+      ? liveState.tideWeek.map((tideDay, i) => {
+          const result = buildCurrentResult(spot, tideDay, windDeg, windSpeed, i % 2 === 0 ? "朝" : "夕");
+          return {
+            date: addDays(new Date(), i),
+            tideDay,
+            result
+          };
+        })
+      : Array.from({ length: 7 }).map((_, i) => {
+          const dummyTide = { range: 80, morningMove: 15, eveningMove: 18 };
+          const result = buildCurrentResult(spot, dummyTide, windDeg, windSpeed, i % 2 === 0 ? "朝" : "夕");
+          return {
+            date: addDays(new Date(), i),
+            tideDay: dummyTide,
+            result
+          };
+        });
+
+    renderHero(todayResult, spot);
+    renderMethod3(todayResult);
+    renderSummary("todayBox", "今日の総合判定", todayResult, liveState.tideToday, "today");
+    renderSummary("tomorrowBox", "明日の前日予測", tomorrowResult, liveState.tideTomorrow, "tomorrow");
     renderWeek(weekList);
     renderAiSummary(spot);
     renderFishSpecies(spot, todayResult, liveState.tideToday);
 
     document.getElementById("statusText").textContent =
-      `${spotRules[spot].name} のおすすめを更新しました。潮・風・水温・期待魚種・魚種別釣法・AI補正を反映しています。`;
+      `${spotRules[spot].name} のおすすめを更新しました。風向・風速・潮位差・3系統判定・期待魚種・AI補正を反映しています。`;
+
     document.getElementById("liveTide").textContent =
       liveState.tideToday
         ? `${spotRules[spot].tideStation} / 潮差 ${liveState.tideToday.range}cm / 朝 ${liveState.tideToday.morningMove}cm / 夕 ${liveState.tideToday.eveningMove}cm`
         : `${spotRules[spot].tideStation} / 未取得`;
+
     document.getElementById("liveWind").textContent =
-      liveState.windCurrent?.text || "未取得";
+      liveState.windCurrent
+        ? `${liveState.windCurrent.dir16} / ${liveState.windCurrent.speed.toFixed(1)}m/s`
+        : "未取得";
+
     document.getElementById("liveTemp").textContent =
       liveState.tempCurrent?.text || "未取得";
-    document.getElementById("liveMethod").textContent = todayResult.method;
+
+    document.getElementById("liveMethod").textContent = todayResult.flowMethod;
     document.getElementById("logSpot").value = spot;
   }
 
@@ -1140,110 +1175,6 @@
 
   window.deleteLog = deleteLog;
 
-  async function fetchTideForDate(spot, dateObj) {
-    const date = ymdCompact(dateObj);
-    const res = await fetch(`/api/msil-tide?spot=${encodeURIComponent(spot)}&date=${date}`);
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`潮取得失敗: ${txt.slice(0,140)}`);
-    }
-    return await res.json();
-  }
-
-  async function fetchTideWeek(spot) {
-    const base = new Date();
-    const arr = [];
-    for (let i = 0; i < 7; i++) {
-      const d = addDays(base, i);
-      const raw = await fetchTideForDate(spot, d);
-      arr.push(analyzeTideDay(raw, d));
-    }
-    return arr;
-  }
-
-  async function fetchWindWeather(spot) {
-    const info = spotRules[spot];
-    const url =
-      `https://api.open-meteo.com/v1/forecast?latitude=${info.lat}&longitude=${info.lon}` +
-      `&current=wind_speed_10m,wind_direction_10m&timezone=Asia%2FTokyo&forecast_days=8`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("風取得失敗");
-    return await res.json();
-  }
-
-  async function fetchMarineTemp(spot) {
-    const info = spotRules[spot];
-    const url =
-      `https://marine-api.open-meteo.com/v1/marine?latitude=${info.lat}&longitude=${info.lon}` +
-      `&current=sea_surface_temperature&hourly=sea_surface_temperature&timezone=Asia%2FTokyo&past_days=1&forecast_days=8`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("水温取得失敗");
-    return await res.json();
-  }
-
-  function windLevelFromCurrent(speed, dir, spot) {
-    const dirText = directionLabel(dir);
-    const rule = spotRules[spot];
-
-    let base = 1;
-    if (speed <= 3) base = 3;
-    else if (speed <= 6) base = 2;
-    else if (speed <= 9) base = 1;
-    else base = 0;
-
-    if (rule.favorableDirs.includes(dirText)) base += 1;
-    if (rule.badDirs.includes(dirText)) base -= 1;
-
-    if (base > 3) base = 3;
-    if (base < 0) base = 0;
-
-    return {
-      level: base,
-      dirText,
-      speed,
-      text: `${dirText} ${speed ?? "-"} m/s`
-    };
-  }
-
-  function extractYesterdaySameHourTemp(marineJson) {
-    const current = marineJson.current?.sea_surface_temperature;
-    const nowTime = marineJson.current?.time;
-    const times = marineJson.hourly?.time || [];
-    const temps = marineJson.hourly?.sea_surface_temperature || [];
-    if (!nowTime || !Array.isArray(times) || !Array.isArray(temps)) return { current, prev: null };
-
-    const now = new Date(nowTime);
-    const target = new Date(now);
-    target.setDate(target.getDate() - 1);
-
-    const iso = target.toISOString().slice(0, 13);
-    const idx = times.findIndex(t => String(t).slice(0, 13) === iso);
-
-    return {
-      current,
-      prev: idx >= 0 ? temps[idx] : null
-    };
-  }
-
-  function tempLevelFromMarine(currentTemp, yesterdaySameHourTemp) {
-    if (currentTemp == null) return { level: 1, text: "未取得", diff: null };
-
-    let diff = null;
-    if (yesterdaySameHourTemp != null) diff = Number((currentTemp - yesterdaySameHourTemp).toFixed(1));
-
-    let level = 1;
-    if (diff == null) level = 1;
-    else if (Math.abs(diff) <= 0.7) level = 2;
-    else if (Math.abs(diff) <= 1.5) level = 1;
-    else level = 0;
-
-    const text = diff == null
-      ? `${currentTemp.toFixed(1)}℃`
-      : `${currentTemp.toFixed(1)}℃ / 前日差 ${diff > 0 ? "+" : ""}${diff.toFixed(1)}℃`;
-
-    return { level, text, diff };
-  }
-
   async function fetchLiveData() {
     const spot = document.getElementById("spotSelect").value;
     document.getElementById("statusText").textContent = "実データ取得中です…";
@@ -1260,14 +1191,13 @@
       liveState.tideTomorrow = tideWeek[1] || null;
 
       const windCurrent = windJson.current || {};
-      liveState.windCurrent = windLevelFromCurrent(
-        windCurrent.wind_speed_10m,
-        windCurrent.wind_direction_10m,
-        spot
-      );
+      liveState.windCurrent = {
+        speed: Number(windCurrent.wind_speed_10m || 0),
+        deg: Number(windCurrent.wind_direction_10m || 0),
+        dir16: degTo16Dir(windCurrent.wind_direction_10m)
+      };
 
-      const marineTemp = extractYesterdaySameHourTemp(marineJson);
-      liveState.tempCurrent = tempLevelFromMarine(marineTemp.current, marineTemp.prev);
+      liveState.tempCurrent = tempDisplayFromMarine(marineJson);
 
       document.getElementById("liveDataNote").textContent =
         "潮は MSIL、風は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。";
