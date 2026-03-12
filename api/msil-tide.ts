@@ -11,20 +11,17 @@ type SpotConfig = {
 };
 
 const SPOT_MAP: Record<string, SpotConfig> = {
-  // 新表記
   hoshiga: {
     label: "星賀",
-    stationCode: "4101", // 唐津
+    stationCode: "4101",
   },
   funakoshi: {
     label: "船越",
-    stationCode: "4101", // 唐津
+    stationCode: "4101",
   },
-
-  // 旧表記も受ける（互換対応）
   seiga: {
     label: "星賀",
-    stationCode: "4101", // 唐津
+    stationCode: "4101",
   },
 };
 
@@ -34,9 +31,7 @@ function sendError(
   error: string,
   detail?: string
 ) {
-  return res.status(status).json(
-    detail ? { error, detail } : { error }
-  );
+  return res.status(status).json(detail ? { error, detail } : { error });
 }
 
 function normalizeSpot(rawSpot: unknown): string {
@@ -68,16 +63,10 @@ export default async function handler(
     }
 
     if (!isValidDate(date)) {
-      return sendError(
-        res,
-        400,
-        "Invalid date format",
-        "date must be YYYYMMDD"
-      );
+      return sendError(res, 400, "Invalid date format", "date must be YYYYMMDD");
     }
 
     const spotConfig = SPOT_MAP[rawSpot];
-
     if (!spotConfig) {
       return sendError(res, 400, `Unknown spot: ${rawSpot}`);
     }
@@ -92,7 +81,8 @@ export default async function handler(
       );
     }
 
-    const baseUrl = "https://api.msil.go.jp/tide/v3/data";
+    // ここが重要修正
+    const baseUrl = "https://api.msil.go.jp/data";
     const url = `${baseUrl}?stationCode=${encodeURIComponent(
       spotConfig.stationCode
     )}&date=${encodeURIComponent(date)}`;
