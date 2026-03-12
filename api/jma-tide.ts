@@ -23,7 +23,7 @@ type ErrorResponse = {
 const JMA_STATION_MAP: Record<string, { code: string; name: string }> = {
   hoshiga: { code: "KA", name: "唐津" },
   funakoshi: { code: "KA", name: "唐津" },
-  seiga: { code: "KA", name: "唐津" }, // 旧互換
+  seiga: { code: "KA", name: "唐津" }
 };
 
 function sendError(
@@ -44,7 +44,6 @@ function isValidDate(date: string): boolean {
 }
 
 function toJmaDateText(date: string): string {
-  // 2026-03-12 -> 2026/03/12
   return date.replaceAll("-", "/");
 }
 
@@ -60,6 +59,11 @@ function cleanHtml(html: string): string {
     .replace(/\n/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function padTime(value: string): string {
+  const [h, m] = value.split(":");
+  return `${String(h).padStart(2, "0")}:${m}`;
 }
 
 function uniqEvents(events: TideEvent[]): TideEvent[] {
@@ -78,7 +82,6 @@ function uniqEvents(events: TideEvent[]): TideEvent[] {
 function parseDayFromText(pageText: string, date: string) {
   const dateText = toJmaDateText(date);
 
-  // 該当日付から次の日付までを切り出す
   const nextDay = new Date(`${date}T00:00:00+09:00`);
   nextDay.setDate(nextDay.getDate() + 1);
   const yyyy = nextDay.getFullYear();
@@ -92,39 +95,38 @@ function parseDayFromText(pageText: string, date: string) {
   }
 
   let endIdx = pageText.indexOf(nextDateText, startIdx + dateText.length);
-  if (endIdx < 0) endIdx = Math.min(pageText.length, startIdx + 1200);
+  if (endIdx < 0) endIdx = Math.min(pageText.length, startIdx + 500);
 
   const chunk = pageText.slice(startIdx, endIdx);
 
-  // まず "*" を空扱いし、時刻+潮位のペアを抽出
-  // JMAページは、その日の行の中に満潮/干潮の時刻と潮位(cm)が並ぶ
-  const pairRegex = /(\d{1,2}:\d{2})\s+(-?\d+)|\*/g;
+  // 日付の直後に並ぶ「時刻 潮位」または "*" を順番に読む
+  const tokenRegex = /(\d{1,2}:\d{2})\s+(-?\d+)|\*/g;
+  const tokens: Array<TideEvent | null> = [];
 
-  const pairs: Array<TideEvent | null> = [];
   let match: RegExpExecArray | null;
-  while ((match = pairRegex.exec(chunk)) !== null) {
+  while ((match = tokenRegex.exec(chunk)) !== null) {
     if (match[0] === "*") {
-      pairs.push(null);
+      tokens.push(null);
     } else {
-      pairs.push({
-        time: match[1].padStart(5, "0"),
-        levelCm: Number(match[2]),
+      tokens.push({
+        time: padTime(match[1]),
+        levelCm: Number(match[2])
       });
     }
   }
 
-  // JMA表は通常、前半が満潮、後半が干潮
-  // 日により件数差があるので、まず実データだけを順に拾い、
-  // 先に2件までを満潮、残りを干潮に振る方式は危険。
-  // そこで chunk 内の「満潮」「干潮」見出しが同日に含まれない可能性を考え、
-  // 初版では 4件までを前半2件=満潮候補、後半2件=干潮候補 とする。
-  const realPairs = pairs.filter(Boolean) as TideEvent[];
+  // JMA表は1日分について
+  // 満潮 4枠 + 干潮 4枠
+  // の順に並んでいるので、最初の8枠だけ見る
+  const first8 = tokens.slice(0, 8);
 
-  // 安全策: 取りすぎたら先頭4件まで
-  const picked = realPairs.slice(0, 4);
+  const highs = uniqEvents(
+    first8.slice(0, 4).filter(Boolean) as TideEvent[]
+  );
 
-  const highs = uniqEvents(picked.slice(0, 2));
-  const lows = uniqEvents(picked.slice(2, 4));
+  const lows = uniqEvents(
+    first8.slice(4, 8).filter(Boolean) as TideEvent[]
+  );
 
   return { highs, lows, rawChunk: chunk };
 }
@@ -161,8 +163,8 @@ export default async function handler(
       headers: {
         "User-Agent": "Mozilla/5.0 tide-app/1.0",
         "Accept": "text/html,application/xhtml+xml",
-        "Cache-Control": "no-cache",
-      },
+        "Cache-Control": "no-cache"
+      }
     });
 
     const html = await upstream.text();
@@ -181,7 +183,7 @@ export default async function handler(
       date,
       highs: parsed.highs,
       lows: parsed.lows,
-      fetchedAt: new Date().toISOString(),
+      fetchedAt: new Date().toISOString()
     });
   } catch (err: any) {
     return sendError(
