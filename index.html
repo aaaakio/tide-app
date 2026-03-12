@@ -1,660 +1,1007 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>星賀・船越 青物攻略チェックアプリ</title>
-  <style>
-    :root {
-      --bg: #eef3f8;
-      --card: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --line: #dbe3ec;
-      --primary: #0f172a;
-      --primary2: #1d4ed8;
-      --ok: #166534;
-      --okbg: #dcfce7;
-      --mid: #92400e;
-      --midbg: #fef3c7;
-      --bad: #991b1b;
-      --badbg: #fee2e2;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>星賀・船越 青物攻略チェックアプリ</title>
+<style>
+  :root{
+    --bg:#eef3f8;
+    --card:#ffffff;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --line:#dbe3ec;
+    --primary:#0f172a;
+    --primary2:#1d4ed8;
+    --ok:#166534;
+    --okbg:#dcfce7;
+    --mid:#92400e;
+    --midbg:#fef3c7;
+    --bad:#991b1b;
+    --badbg:#fee2e2;
+    --info:#1d4ed8;
+    --infobg:#dbeafe;
+  }
 
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    .wrap {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 14px;
-    }
-
-    h1 {
-      margin: 0 0 6px;
-      font-size: 24px;
-      line-height: 1.2;
-    }
-
-    h2 {
-      margin: 0 0 12px;
-      font-size: 18px;
-      line-height: 1.3;
-    }
-
-    .sub {
-      color: var(--muted);
-      font-size: 13px;
-      margin-bottom: 14px;
-    }
-
-    .panel {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 14px;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
-      border: 1px solid rgba(15, 23, 42, 0.04);
-    }
-
-    .hero {
-      background: linear-gradient(135deg, var(--primary), var(--primary2));
-      color: #fff;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .score {
-      font-size: 30px;
-      font-weight: 800;
-      margin: 6px 0 10px;
-      letter-spacing: 1px;
-    }
-
-    .label {
-      display: inline-block;
-      padding: 5px 10px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .label.good { background: var(--okbg); color: var(--ok); }
-    .label.mid { background: var(--midbg); color: var(--mid); }
-    .label.bad { background: var(--badbg); color: var(--bad); }
-    .hero .label { background: rgba(255,255,255,0.18); color: #fff; }
-
-    .meta {
-      font-size: 14px;
-      line-height: 1.7;
-    }
-
-    .small {
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    .hero .small {
-      color: rgba(255,255,255,0.84);
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    select, input, textarea, button {
-      font-size: 16px;
-      padding: 10px 12px;
-      border-radius: 10px;
-    }
-
-    select, input, textarea {
-      border: 1px solid var(--line);
-      background: #fff;
-      color: var(--text);
-      width: 100%;
-    }
-
-    button {
-      border: none;
-      background: var(--primary);
-      color: #fff;
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    button.secondary {
-      background: #e5e7eb;
-      color: #111827;
-    }
-
-    .danger {
-      background: #b91c1c;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-size: 12px;
-    }
-
-    .status {
-      margin-top: 8px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .grid2 {
-      display: grid;
-      gap: 10px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .grid3 {
-      display: grid;
-      gap: 10px;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .stat {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 10px;
-      background: #fbfcfe;
-    }
-
-    .stat .k {
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-
-    .stat .v {
-      font-size: 15px;
-      font-weight: 700;
-    }
-
-    .week-grid {
-      display: grid;
-      gap: 10px;
-    }
-
-    .day-card {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 12px;
-      background: #fcfcfd;
-    }
-
-    .day-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
-
-    .day-date {
-      font-weight: 800;
-      font-size: 15px;
-    }
-
-    .day-stars {
-      font-weight: 800;
-      font-size: 20px;
-    }
-
-    .method {
-      margin-top: 6px;
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .bullet {
-      margin-top: 6px;
-      font-size: 14px;
-      line-height: 1.7;
-    }
-
-    .log-item {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 10px;
-      background: #fbfcfe;
-      margin-bottom: 8px;
-    }
-
-    .log-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      font-size: 13px;
-      margin-bottom: 6px;
-      align-items: center;
-    }
-
-    .log-title {
-      font-weight: 700;
-    }
-
-    .ai-box {
-      border: 1px solid #c7d2fe;
-      background: #eef2ff;
-      border-radius: 12px;
-      padding: 10px;
-    }
-
-    .ai-title {
-      font-size: 13px;
-      font-weight: 800;
-      color: #3730a3;
-      margin-bottom: 6px;
-    }
-
-    @media (max-width: 700px) {
-      .grid2, .grid3 { grid-template-columns: 1fr; }
-      .score { font-size: 28px; }
-    }
-  </style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  .wrap{
+    max-width:860px;
+    margin:0 auto;
+    padding:14px;
+  }
+  h1{
+    margin:0 0 6px;
+    font-size:24px;
+    line-height:1.2;
+  }
+  h2{
+    margin:0 0 12px;
+    font-size:18px;
+    line-height:1.3;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:13px;
+    margin-bottom:14px;
+  }
+  .panel{
+    background:var(--card);
+    border-radius:16px;
+    padding:14px;
+    margin-bottom:14px;
+    box-shadow:0 2px 10px rgba(15,23,42,0.06);
+    border:1px solid rgba(15,23,42,0.04);
+  }
+  .hero{
+    background:linear-gradient(135deg,var(--primary),var(--primary2));
+    color:#fff;
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  .hero .small{
+    color:rgba(255,255,255,0.84);
+  }
+  .score{
+    font-size:30px;
+    font-weight:800;
+    margin:6px 0 10px;
+    letter-spacing:1px;
+  }
+  .label{
+    display:inline-block;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  .label.good{background:var(--okbg);color:var(--ok)}
+  .label.mid{background:var(--midbg);color:var(--mid)}
+  .label.bad{background:var(--badbg);color:var(--bad)}
+  .label.info{background:var(--infobg);color:var(--info)}
+  .hero .label{background:rgba(255,255,255,0.18);color:#fff}
+  .meta{
+    font-size:14px;
+    line-height:1.7;
+  }
+  .small{
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.6;
+  }
+  .row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  select,input,textarea,button{
+    font-size:16px;
+    padding:10px 12px;
+    border-radius:10px;
+  }
+  select,input,textarea{
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--text);
+    width:100%;
+  }
+  button{
+    border:none;
+    background:var(--primary);
+    color:#fff;
+    cursor:pointer;
+    font-weight:700;
+  }
+  button.secondary{
+    background:#e5e7eb;
+    color:#111827;
+  }
+  .danger{
+    background:#b91c1c;
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    padding:6px 10px;
+    font-size:12px;
+  }
+  .status{
+    margin-top:8px;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .grid2{
+    display:grid;
+    gap:10px;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .grid3{
+    display:grid;
+    gap:10px;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .stat{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px;
+    background:#fbfcfe;
+  }
+  .stat .k{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  .stat .v{
+    font-size:15px;
+    font-weight:700;
+    line-height:1.5;
+  }
+  .week-grid{
+    display:grid;
+    gap:10px;
+  }
+  .day-card{
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px;
+    background:#fcfcfd;
+  }
+  .day-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .day-date{
+    font-weight:800;
+    font-size:15px;
+  }
+  .day-stars{
+    font-weight:800;
+    font-size:20px;
+  }
+  .method{
+    margin-top:6px;
+    font-size:14px;
+    font-weight:700;
+  }
+  .bullet{
+    margin-top:6px;
+    font-size:14px;
+    line-height:1.7;
+  }
+  .fish-list{
+    margin-top:8px;
+    padding:10px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:#fbfcfe;
+  }
+  .fish-title{
+    font-size:13px;
+    font-weight:800;
+    color:#0f172a;
+    margin-bottom:6px;
+  }
+  .fish-line{
+    font-size:14px;
+    line-height:1.8;
+  }
+  .fish-method{
+    margin-top:8px;
+    padding:10px;
+    border-radius:10px;
+    background:#f8fafc;
+    border:1px dashed #cbd5e1;
+  }
+  .fish-method-title{
+    font-size:13px;
+    font-weight:800;
+    color:#1e3a8a;
+    margin-bottom:6px;
+  }
+  .log-item{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px;
+    background:#fbfcfe;
+    margin-bottom:8px;
+  }
+  .log-head{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    font-size:13px;
+    margin-bottom:6px;
+    align-items:center;
+  }
+  .log-title{
+    font-weight:700;
+  }
+  .ai-box{
+    border:1px solid #c7d2fe;
+    background:#eef2ff;
+    border-radius:12px;
+    padding:10px;
+  }
+  .ai-title{
+    font-size:13px;
+    font-weight:800;
+    color:#3730a3;
+    margin-bottom:6px;
+  }
+  @media (max-width:700px){
+    .grid2,.grid3{grid-template-columns:1fr}
+    .score{font-size:28px}
+  }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>星賀・船越 青物攻略チェックアプリ</h1>
-    <div class="sub">前日予測 / 当日判断 / 今日から1週間おすすめ / 実データ / 釣果ログ / 簡易AI補正</div>
+<div class="wrap">
+  <h1>星賀・船越 青物攻略チェックアプリ</h1>
+  <div class="sub">前日予測 / 当日判断 / 1週間おすすめ / 実データ / 水温実データ / 期待魚種 / 魚種ごとのおすすめ釣法 / 釣果ログ / 簡易AI補正</div>
 
-    <div class="panel hero">
-      <h2>今日の結論</h2>
-      <div id="heroLabel" class="label">短時間様子見</div>
-      <div id="heroScore" class="score">★★</div>
-      <div id="heroMethod" class="meta">おすすめ：カゴ＋泳がせ</div>
-      <div id="heroComment" class="meta">潮まずまず。風良い。ベイト期待。</div>
-      <div class="small" id="heroNote">星賀・船越ごとの補正を反映しています。</div>
+  <div class="panel hero">
+    <h2>今日の結論</h2>
+    <div id="heroLabel" class="label">短時間様子見</div>
+    <div id="heroScore" class="score">★★</div>
+    <div id="heroMethod" class="meta">おすすめ：カゴ＋泳がせ</div>
+    <div id="heroComment" class="meta">潮まずまず。風良い。ベイト期待。</div>
+    <div class="small" id="heroNote">星賀・船越ごとの補正を反映しています。</div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <label for="spotSelect">場所</label>
+      <select id="spotSelect" style="max-width:220px;">
+        <option value="seiga">星賀漁港</option>
+        <option value="funakoshi">船越漁港</option>
+      </select>
+      <button id="refreshBtn">おすすめを更新</button>
+      <button id="fetchBtn" class="secondary">実データ更新</button>
     </div>
+    <div class="status" id="statusText">初期表示中です。</div>
+  </div>
 
-    <div class="panel">
-      <div class="row">
-        <label for="spotSelect">場所</label>
-        <select id="spotSelect" style="max-width:220px;">
-          <option value="seiga">星賀漁港</option>
-          <option value="funakoshi">船越漁港</option>
-        </select>
-
-        <button id="refreshBtn">おすすめを更新</button>
-        <button id="fetchBtn" class="secondary">実データ更新</button>
+  <div class="panel">
+    <h2>実データ</h2>
+    <div class="grid2">
+      <div class="stat">
+        <div class="k">潮</div>
+        <div class="v" id="liveTide">唐津 4101 / 未取得</div>
       </div>
-      <div class="status" id="statusText">初期表示中です。</div>
-    </div>
-
-    <div class="panel">
-      <h2>実データ</h2>
-      <div class="grid2">
-        <div class="stat">
-          <div class="k">潮</div>
-          <div class="v" id="liveTide">唐津 4101 / 未取得</div>
-        </div>
-        <div class="stat">
-          <div class="k">風</div>
-          <div class="v" id="liveWind">未取得</div>
-        </div>
-        <div class="stat">
-          <div class="k">水温</div>
-          <div class="v" id="liveTemp">未取得</div>
-        </div>
-        <div class="stat">
-          <div class="k">おすすめ釣法</div>
-          <div class="v" id="liveMethod">未計算</div>
-        </div>
+      <div class="stat">
+        <div class="k">風</div>
+        <div class="v" id="liveWind">未取得</div>
       </div>
-      <div class="status" id="liveDataNote">潮は MSIL、風は Open-Meteo、水温は次段階、釣果ログはブラウザ保存です。</div>
-    </div>
-
-    <div class="panel">
-      <h2>簡易AI補正</h2>
-      <div class="ai-box">
-        <div class="ai-title">自分の過去釣果からの補正</div>
-        <div class="meta" id="aiSummary">まだ十分な学習データがありません。</div>
+      <div class="stat">
+        <div class="k">水温</div>
+        <div class="v" id="liveTemp">未取得</div>
+      </div>
+      <div class="stat">
+        <div class="k">おすすめ釣法</div>
+        <div class="v" id="liveMethod">未計算</div>
       </div>
     </div>
+    <div class="status" id="liveDataNote">潮は MSIL、水温は Open-Meteo Marine、風は Open-Meteo Weather から取得します。</div>
+  </div>
 
-    <div class="panel">
-      <h2>今日の当日判断</h2>
-      <div id="todayBox"></div>
+  <div class="panel">
+    <h2>期待魚種</h2>
+    <div id="fishBox" class="fish-list">
+      <div class="fish-title">本日の期待魚種</div>
+      <div class="fish-line">第一候補：-</div>
+      <div class="fish-line">第二候補：-</div>
+      <div class="fish-line">大物期待：-</div>
     </div>
-
-    <div class="panel">
-      <h2>明日の前日予測</h2>
-      <div id="tomorrowBox"></div>
-    </div>
-
-    <div class="panel">
-      <h2>今日から1週間おすすめ</h2>
-      <div class="week-grid" id="weekBox"></div>
-    </div>
-
-    <div class="panel">
-      <h2>釣果ログ</h2>
-      <div class="grid3">
-        <div>
-          <label class="small">日付</label>
-          <input type="date" id="logDate" />
-        </div>
-        <div>
-          <label class="small">場所</label>
-          <select id="logSpot">
-            <option value="seiga">星賀漁港</option>
-            <option value="funakoshi">船越漁港</option>
-          </select>
-        </div>
-        <div>
-          <label class="small">時間帯</label>
-          <select id="logTimeBand">
-            <option value="朝">朝</option>
-            <option value="昼">昼</option>
-            <option value="夕">夕</option>
-            <option value="夜">夜</option>
-          </select>
-        </div>
-        <div>
-          <label class="small">釣法</label>
-          <select id="logMethod">
-            <option value="カゴ">カゴ</option>
-            <option value="餌">餌</option>
-            <option value="ルアー">ルアー</option>
-            <option value="泳がせ">泳がせ</option>
-          </select>
-        </div>
-        <div>
-          <label class="small">釣果</label>
-          <select id="logResult">
-            <option value="釣れた">釣れた</option>
-            <option value="反応あり">反応あり</option>
-            <option value="不発">不発</option>
-          </select>
-        </div>
-        <div>
-          <label class="small">サイズ・魚種</label>
-          <input type="text" id="logFish" placeholder="例：ヤズ 45cm" />
-        </div>
-      </div>
-
-      <div style="margin-top:10px;">
-        <label class="small">メモ</label>
-        <textarea id="logMemo" rows="3" placeholder="ベイト、海面、風、立ち位置など"></textarea>
-      </div>
-
-      <div class="row" style="margin-top:10px;">
-        <button id="saveLogBtn">釣果ログを保存</button>
-        <button id="clearLogBtn" class="secondary">全ログ削除</button>
-      </div>
-
-      <div class="status">保存先はこのブラウザ内です。まずは自分専用ログとして使います。</div>
-      <div style="margin-top:12px;" id="logList"></div>
+    <div id="fishMethodBox" class="fish-method">
+      <div class="fish-method-title">魚種ごとのおすすめ釣法</div>
+      <div class="fish-line">-</div>
     </div>
   </div>
 
-  <script>
-    const LOG_KEY = "seiga-funakoshi-log-v2";
+  <div class="panel">
+    <h2>簡易AI補正</h2>
+    <div class="ai-box">
+      <div class="ai-title">自分の過去釣果からの補正</div>
+      <div class="meta" id="aiSummary">まだ十分な学習データがありません。</div>
+    </div>
+  </div>
 
-    const spotRules = {
-      seiga: {
-        name: "星賀漁港",
-        tendency: "回遊待ち重視。潮・まずめ・ベイト・海面変化を強く評価。",
-        tideStation: "唐津 / 4101",
-        lat: 33.413,
-        lon: 129.873,
-        weights: { tide: 3, mazume: 3, wind: 2, temp: 2, bait: 3, surface: 3, method: 2 }
+  <div class="panel">
+    <h2>今日の当日判断</h2>
+    <div id="todayBox"></div>
+  </div>
+
+  <div class="panel">
+    <h2>明日の前日予測</h2>
+    <div id="tomorrowBox"></div>
+  </div>
+
+  <div class="panel">
+    <h2>今日から1週間おすすめ</h2>
+    <div class="week-grid" id="weekBox"></div>
+  </div>
+
+  <div class="panel">
+    <h2>釣果ログ</h2>
+    <div class="grid3">
+      <div>
+        <label class="small">日付</label>
+        <input type="date" id="logDate" />
+      </div>
+      <div>
+        <label class="small">場所</label>
+        <select id="logSpot">
+          <option value="seiga">星賀漁港</option>
+          <option value="funakoshi">船越漁港</option>
+        </select>
+      </div>
+      <div>
+        <label class="small">時間帯</label>
+        <select id="logTimeBand">
+          <option value="朝">朝</option>
+          <option value="昼">昼</option>
+          <option value="夕">夕</option>
+          <option value="夜">夜</option>
+        </select>
+      </div>
+      <div>
+        <label class="small">釣法</label>
+        <select id="logMethod">
+          <option value="カゴ">カゴ</option>
+          <option value="餌">餌</option>
+          <option value="ルアー">ルアー</option>
+          <option value="泳がせ">泳がせ</option>
+        </select>
+      </div>
+      <div>
+        <label class="small">釣果</label>
+        <select id="logResult">
+          <option value="釣れた">釣れた</option>
+          <option value="反応あり">反応あり</option>
+          <option value="不発">不発</option>
+        </select>
+      </div>
+      <div>
+        <label class="small">サイズ・魚種</label>
+        <input type="text" id="logFish" placeholder="例：ヤズ 45cm" />
+      </div>
+    </div>
+
+    <div style="margin-top:10px;">
+      <label class="small">メモ</label>
+      <textarea id="logMemo" rows="3" placeholder="ベイト、海面、風、立ち位置など"></textarea>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <button id="saveLogBtn">釣果ログを保存</button>
+      <button id="clearLogBtn" class="secondary">全ログ削除</button>
+    </div>
+
+    <div class="status">保存先はこのブラウザ内です。まずは自分専用ログとして使います。</div>
+    <div style="margin-top:12px;" id="logList"></div>
+  </div>
+</div>
+
+<script>
+  const LOG_KEY = "seiga-funakoshi-log-v5";
+
+  const spotRules = {
+    seiga: {
+      name: "星賀漁港",
+      tendency: "回遊待ち重視。潮・まずめ・ベイト・海面変化を強く評価。",
+      tideStation: "唐津 / 4101",
+      lat: 33.413,
+      lon: 129.873,
+      favorableDirs: ["北東", "東", "南東"],
+      badDirs: ["北西"],
+      fishBase: {
+        "ヤズ / ハマチ": 3,
+        "サゴシ": 2,
+        "ネリゴ": 1,
+        "ヒラマサ": 2
       },
-      funakoshi: {
-        name: "船越漁港",
-        tendency: "風と立ち位置相性を重視。潮が弱い日でも釣法の工夫を評価。",
-        tideStation: "唐津 / 4101",
-        lat: 33.452,
-        lon: 129.969,
-        weights: { tide: 2, mazume: 2, wind: 3, temp: 2, bait: 2, surface: 2, method: 3 }
-      }
-    };
-
-    const liveState = {
-      tideInfo: null,
-      windInfo: null,
-      tempInfo: null
-    };
-
-    function addDays(base, plus) {
-      const d = new Date(base);
-      d.setDate(d.getDate() + plus);
-      return d;
+      fishMethodMap: {
+        "ヤズ / ハマチ": "カゴ＋泳がせ",
+        "サゴシ": "ルアー",
+        "ネリゴ": "泳がせ＋ルアー",
+        "ヒラマサ": "泳がせ本命"
+      },
+      weights: { tide: 3, mazume: 3, wind: 2, temp: 2, bait: 3, surface: 3, method: 2 }
+    },
+    funakoshi: {
+      name: "船越漁港",
+      tendency: "風と立ち位置相性を重視。潮が弱い日でも釣法の工夫を評価。",
+      tideStation: "唐津 / 4101",
+      lat: 33.452,
+      lon: 129.969,
+      favorableDirs: ["南", "南東", "東"],
+      badDirs: ["北"],
+      fishBase: {
+        "ヤズ / ハマチ": 3,
+        "サゴシ": 2,
+        "ネリゴ": 2,
+        "ヒラマサ": 1
+      },
+      fishMethodMap: {
+        "ヤズ / ハマチ": "カゴ＋泳がせ",
+        "サゴシ": "ルアー短時間",
+        "ネリゴ": "泳がせ",
+        "ヒラマサ": "泳がせ＋カゴ待ち"
+      },
+      weights: { tide: 2, mazume: 2, wind: 3, temp: 2, bait: 2, surface: 2, method: 3 }
     }
+  };
 
-    function fmtDate(d) {
-      const m = d.getMonth() + 1;
-      const day = d.getDate();
-      const w = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
-      return `${m}/${day}（${w}）`;
+  const liveState = {
+    tideToday: null,
+    tideTomorrow: null,
+    tideWeek: [],
+    windCurrent: null,
+    tempCurrent: null
+  };
+
+  function addDays(base, plus) {
+    const d = new Date(base);
+    d.setDate(d.getDate() + plus);
+    return d;
+  }
+
+  function ymd(d = new Date()) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function ymdCompact(d = new Date()) {
+    return ymd(d).replaceAll("-", "");
+  }
+
+  function fmtDate(d) {
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    const w = ["日","月","火","水","木","金","土"][d.getDay()];
+    return `${m}/${day}（${w}）`;
+  }
+
+  function starText(score) {
+    if (score >= 8) return "★★★";
+    if (score >= 5) return "★★";
+    return "★";
+  }
+
+  function bandLabel(score) {
+    if (score >= 8) return "本命";
+    if (score >= 5) return "候補";
+    return "見送り寄り";
+  }
+
+  function todayJudgeLabel(score) {
+    if (score >= 15) return { text: "GO", cls: "good" };
+    if (score >= 11) return { text: "朝夕まずめだけGO", cls: "mid" };
+    if (score >= 7) return { text: "短時間様子見", cls: "mid" };
+    return { text: "見送り", cls: "bad" };
+  }
+
+  function tomorrowJudgeLabel(score) {
+    if (score >= 13) return { text: "本命日", cls: "good" };
+    if (score >= 9) return { text: "候補日", cls: "mid" };
+    if (score >= 6) return { text: "短時間候補", cls: "mid" };
+    return { text: "見送り寄り", cls: "bad" };
+  }
+
+  function directionLabel(deg) {
+    if (deg == null || Number.isNaN(Number(deg))) return "-";
+    const d = Number(deg);
+    if (d >= 337.5 || d < 22.5) return "北";
+    if (d < 67.5) return "北東";
+    if (d < 112.5) return "東";
+    if (d < 157.5) return "南東";
+    if (d < 202.5) return "南";
+    if (d < 247.5) return "南西";
+    if (d < 292.5) return "西";
+    return "北西";
+  }
+
+  function getLogs() {
+    try {
+      return JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
+    } catch {
+      return [];
     }
+  }
 
-    function ymd(d = new Date()) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
-    }
+  function setLogs(logs) {
+    localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+  }
 
-    function ymdCompact(d = new Date()) {
-      return ymd(d).replaceAll("-", "");
-    }
+  function buildAiProfile(spot) {
+    const logs = getLogs().filter(l => l.spot === spot);
+    const successLogs = logs.filter(l => l.result === "釣れた" || l.result === "反応あり");
 
-    function starText(score) {
-      if (score >= 8) return "★★★";
-      if (score >= 5) return "★★";
-      return "★";
-    }
+    const methodScore = { "カゴ": 0, "餌": 0, "ルアー": 0, "泳がせ": 0 };
+    const timeScore = { "朝": 0, "昼": 0, "夕": 0, "夜": 0 };
+    const fishScore = { "ヤズ / ハマチ": 0, "サゴシ": 0, "ネリゴ": 0, "ヒラマサ": 0 };
 
-    function bandLabel(score) {
-      if (score >= 8) return "本命";
-      if (score >= 5) return "候補";
-      return "見送り寄り";
-    }
+    successLogs.forEach(l => {
+      methodScore[l.method] = (methodScore[l.method] || 0) + (l.result === "釣れた" ? 2 : 1);
+      timeScore[l.timeBand] = (timeScore[l.timeBand] || 0) + (l.result === "釣れた" ? 2 : 1);
 
-    function todayJudgeLabel(score) {
-      if (score >= 15) return { text: "GO", cls: "good" };
-      if (score >= 11) return { text: "朝夕まずめだけGO", cls: "mid" };
-      if (score >= 7) return { text: "短時間様子見", cls: "mid" };
-      return { text: "見送り", cls: "bad" };
-    }
-
-    function tomorrowJudgeLabel(score) {
-      if (score >= 13) return { text: "本命日", cls: "good" };
-      if (score >= 9) return { text: "候補日", cls: "mid" };
-      if (score >= 6) return { text: "短時間候補", cls: "mid" };
-      return { text: "見送り寄り", cls: "bad" };
-    }
-
-    function methodRecommend(input) {
-      if (input.bait >= 2 && input.surface >= 2 && input.tide >= 2) return "カゴ＋泳がせ";
-      if (input.bait >= 2 && input.surface >= 2) return "ルアー＋泳がせ";
-      if (input.tide >= 2 && input.mazume >= 2) return "カゴ＋餌";
-      if (input.surface >= 2) return "ルアー短時間";
-      return "餌＋カゴ";
-    }
-
-    function timeBand(input) {
-      if (input.mazume === 3) return "朝本命";
-      if (input.mazume === 2) return "夕方候補";
-      if (input.mazume === 1) return "朝夕候補";
-      return "終日弱め";
-    }
-
-    function commentText(input, spot) {
-      const parts = [];
-
-      if (input.tide >= 2) parts.push("潮が動く");
-      else if (input.tide === 1) parts.push("潮まずまず");
-      else parts.push("潮弱い");
-
-      if (input.wind >= 2) parts.push("風良い");
-      else if (input.wind === 1) parts.push("風やや不利");
-      else parts.push("風不利");
-
-      if (spot === "seiga") {
-        if (input.bait >= 2) parts.push("ベイト期待");
-        if (input.surface >= 2) parts.push("海面変化あり");
-      } else {
-        if (input.method >= 2) parts.push("釣法の自由度あり");
-      }
-
-      return parts.join("。");
-    }
-
-    function normalizeWeightedScore(raw) {
-      if (raw >= 75) return 9;
-      if (raw >= 58) return 7;
-      if (raw >= 42) return 5;
-      if (raw >= 28) return 3;
-      return 1;
-    }
-
-    function getLogs() {
-      try {
-        return JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
-      } catch {
-        return [];
-      }
-    }
-
-    function setLogs(logs) {
-      localStorage.setItem(LOG_KEY, JSON.stringify(logs));
-    }
-
-    function buildAiProfile(spot) {
-      const logs = getLogs().filter(l => l.spot === spot);
-      const successLogs = logs.filter(l => l.result === "釣れた" || l.result === "反応あり");
-
-      const methodScore = { "カゴ": 0, "餌": 0, "ルアー": 0, "泳がせ": 0 };
-      const timeScore = { "朝": 0, "昼": 0, "夕": 0, "夜": 0 };
-
-      successLogs.forEach(l => {
-        methodScore[l.method] = (methodScore[l.method] || 0) + (l.result === "釣れた" ? 2 : 1);
-        timeScore[l.timeBand] = (timeScore[l.timeBand] || 0) + (l.result === "釣れた" ? 2 : 1);
+      Object.keys(fishScore).forEach(f => {
+        const keyA = f.split(" / ")[0];
+        const keyB = f.split(" / ")[1] || "";
+        if ((l.fish || "").includes(keyA) || (keyB && (l.fish || "").includes(keyB))) {
+          fishScore[f] += (l.result === "釣れた" ? 2 : 1);
+        }
       });
+    });
 
-      const bestMethod = Object.entries(methodScore).sort((a, b) => b[1] - a[1])[0];
-      const bestTime = Object.entries(timeScore).sort((a, b) => b[1] - a[1])[0];
+    const bestMethod = Object.entries(methodScore).sort((a,b) => b[1] - a[1])[0];
+    const bestTime = Object.entries(timeScore).sort((a,b) => b[1] - a[1])[0];
+
+    return {
+      count: logs.length,
+      successCount: successLogs.length,
+      bestMethod: bestMethod && bestMethod[1] > 0 ? bestMethod[0] : null,
+      bestTime: bestTime && bestTime[1] > 0 ? bestTime[0] : null,
+      fishScore
+    };
+  }
+
+  function aiMethodBonus(method, ai) {
+    if (!ai.bestMethod) return 0;
+    return method.includes(ai.bestMethod) ? 1 : 0;
+  }
+
+  function aiTimeBonus(timeBandText, ai) {
+    if (!ai.bestTime) return 0;
+    return timeBandText.includes(ai.bestTime) ? 1 : 0;
+  }
+
+  function methodRecommend(input) {
+    if (input.bait >= 2 && input.surface >= 2 && input.tide >= 2) return "カゴ＋泳がせ";
+    if (input.bait >= 2 && input.surface >= 2) return "ルアー＋泳がせ";
+    if (input.tide >= 2 && input.mazume >= 2) return "カゴ＋餌";
+    if (input.surface >= 2) return "ルアー短時間";
+    return "餌＋カゴ";
+  }
+
+  function timeBand(input) {
+    if (input.mazume >= 3) return "朝本命";
+    if (input.mazume === 2) return "夕方候補";
+    if (input.mazume === 1) return "朝夕候補";
+    return "終日弱め";
+  }
+
+  function normalizeWeightedScore(raw) {
+    if (raw >= 80) return 9;
+    if (raw >= 62) return 7;
+    if (raw >= 46) return 5;
+    if (raw >= 30) return 3;
+    return 1;
+  }
+
+  function commentText(input, spot, extras = {}) {
+    const parts = [];
+    if (input.tide >= 3) parts.push("潮かなり動く");
+    else if (input.tide >= 2) parts.push("潮が動く");
+    else if (input.tide === 1) parts.push("潮まずまず");
+    else parts.push("潮弱い");
+
+    if (input.wind >= 3) parts.push("風かなり良い");
+    else if (input.wind === 2) parts.push("風良い");
+    else if (input.wind === 1) parts.push("風やや不利");
+    else parts.push("風不利");
+
+    if (input.temp >= 2) parts.push("水温安定");
+    else if (input.temp === 1) parts.push("水温やや変動");
+    else parts.push("水温変化大");
+
+    if (spot === "seiga") {
+      if (input.bait >= 2) parts.push("ベイト期待");
+      if (input.surface >= 2) parts.push("海面変化あり");
+    } else {
+      if (input.method >= 2) parts.push("釣法の自由度あり");
+    }
+
+    if (extras.tempText) parts.push(extras.tempText);
+    return parts.join("。");
+  }
+
+  function calcWeightedDay(input, spot, extras = {}) {
+    const w = spotRules[spot].weights;
+    const ai = buildAiProfile(spot);
+
+    const tempMethod = methodRecommend(input);
+    const tempTime = timeBand(input);
+
+    let raw =
+      input.tide * w.tide +
+      input.mazume * w.mazume +
+      input.wind * w.wind +
+      input.temp * w.temp +
+      input.bait * w.bait +
+      input.surface * w.surface +
+      input.method * w.method;
+
+    raw += aiMethodBonus(tempMethod, ai) * 6;
+    raw += aiTimeBonus(tempTime, ai) * 5;
+
+    const score = normalizeWeightedScore(raw);
+
+    return {
+      raw,
+      score,
+      stars: starText(score),
+      band: bandLabel(score),
+      method: tempMethod,
+      timeBand: tempTime,
+      comment: commentText(input, spot, extras),
+      ai
+    };
+  }
+
+  function analyzeTideDay(raw, dateObj) {
+    if (!raw || !raw.time || !Array.isArray(raw.tide) || raw.tide.length === 0) return null;
+
+    const start = new Date(raw.time);
+    const intervalSec = Number(raw.interval || 60);
+    const points = raw.tide.map((v, i) => ({
+      time: new Date(start.getTime() + i * intervalSec * 1000),
+      level: Number(v)
+    }));
+
+    const levels = points.map(p => p.level);
+    const min = Math.min(...levels);
+    const max = Math.max(...levels);
+    const range = Math.round(max - min);
+
+    function levelAtHour(hour) {
+      const found = points.find(p => p.time.getHours() === hour && p.time.getMinutes() === 0);
+      return found ? found.level : null;
+    }
+
+    const l5 = levelAtHour(5), l8 = levelAtHour(8);
+    const l15 = levelAtHour(15), l18 = levelAtHour(18);
+    const morningMove = (l5 != null && l8 != null) ? Math.abs(l8 - l5) : 0;
+    const eveningMove = (l15 != null && l18 != null) ? Math.abs(l18 - l15) : 0;
+    const mazumeMove = Math.max(morningMove, eveningMove);
+
+    let tideLevel = 0;
+    if (range >= 140 || mazumeMove >= 45) tideLevel = 3;
+    else if (range >= 90 || mazumeMove >= 25) tideLevel = 2;
+    else if (range >= 50 || mazumeMove >= 10) tideLevel = 1;
+    else tideLevel = 0;
+
+    return {
+      date: ymd(dateObj),
+      stationCode: raw.stationCode,
+      range,
+      morningMove: Math.round(morningMove),
+      eveningMove: Math.round(eveningMove),
+      mazumeMove: Math.round(mazumeMove),
+      tideLevel
+    };
+  }
+
+  async function fetchTideForDate(spot, dateObj) {
+    const date = ymdCompact(dateObj);
+    const res = await fetch(`/api/msil-tide?spot=${encodeURIComponent(spot)}&date=${date}`);
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`潮取得失敗: ${txt.slice(0,140)}`);
+    }
+    return await res.json();
+  }
+
+  async function fetchTideWeek(spot) {
+    const base = new Date();
+    const arr = [];
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(base, i);
+      const raw = await fetchTideForDate(spot, d);
+      arr.push(analyzeTideDay(raw, d));
+    }
+    return arr;
+  }
+
+  async function fetchWindWeather(spot) {
+    const info = spotRules[spot];
+    const url =
+      `https://api.open-meteo.com/v1/forecast?latitude=${info.lat}&longitude=${info.lon}` +
+      `&current=wind_speed_10m,wind_direction_10m&timezone=Asia%2FTokyo&forecast_days=8`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("風取得失敗");
+    return await res.json();
+  }
+
+  async function fetchMarineTemp(spot) {
+    const info = spotRules[spot];
+    const url =
+      `https://marine-api.open-meteo.com/v1/marine?latitude=${info.lat}&longitude=${info.lon}` +
+      `&current=sea_surface_temperature&hourly=sea_surface_temperature` +
+      `&timezone=Asia%2FTokyo&past_days=1&forecast_days=8`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("水温取得失敗");
+    return await res.json();
+  }
+
+  function windLevelFromCurrent(speed, dir, spot) {
+    const dirText = directionLabel(dir);
+    const rule = spotRules[spot];
+
+    let base = 1;
+    if (speed <= 3) base = 3;
+    else if (speed <= 6) base = 2;
+    else if (speed <= 9) base = 1;
+    else base = 0;
+
+    if (rule.favorableDirs.includes(dirText)) base += 1;
+    if (rule.badDirs.includes(dirText)) base -= 1;
+
+    if (base > 3) base = 3;
+    if (base < 0) base = 0;
+
+    return {
+      level: base,
+      dirText,
+      speed,
+      text: `${dirText} ${speed ?? "-"} m/s`
+    };
+  }
+
+  function extractYesterdaySameHourTemp(marineJson) {
+    const current = marineJson.current?.sea_surface_temperature;
+    const nowTime = marineJson.current?.time;
+    const times = marineJson.hourly?.time || [];
+    const temps = marineJson.hourly?.sea_surface_temperature || [];
+    if (!nowTime || !Array.isArray(times) || !Array.isArray(temps)) return { current, prev: null };
+
+    const now = new Date(nowTime);
+    const target = new Date(now);
+    target.setDate(target.getDate() - 1);
+
+    const iso = target.toISOString().slice(0, 13);
+    const idx = times.findIndex(t => String(t).slice(0, 13) === iso);
+
+    return {
+      current,
+      prev: idx >= 0 ? temps[idx] : null
+    };
+  }
+
+  function tempLevelFromMarine(currentTemp, yesterdaySameHourTemp) {
+    if (currentTemp == null) return { level: 1, text: "未取得", diff: null };
+
+    let diff = null;
+    if (yesterdaySameHourTemp != null) diff = Number((currentTemp - yesterdaySameHourTemp).toFixed(1));
+
+    let level = 1;
+    if (diff == null) level = 1;
+    else if (Math.abs(diff) <= 0.7) level = 2;
+    else if (Math.abs(diff) <= 1.5) level = 1;
+    else level = 0;
+
+    const text = diff == null
+      ? `${currentTemp.toFixed(1)}℃`
+      : `${currentTemp.toFixed(1)}℃ / 前日差 ${diff > 0 ? "+" : ""}${diff.toFixed(1)}℃`;
+
+    return { level, text, diff };
+  }
+
+  function computeTodayInput(spot) {
+    const tide = liveState.tideToday;
+    const wind = liveState.windCurrent;
+    const temp = liveState.tempCurrent;
+
+    const input = {
+      tide: tide?.tideLevel ?? 1,
+      mazume: tide ? (tide.mazumeMove >= 45 ? 3 : tide.mazumeMove >= 20 ? 2 : tide.mazumeMove >= 8 ? 1 : 0) : 1,
+      wind: wind?.level ?? 1,
+      temp: temp?.level ?? 1,
+      bait: spot === "seiga" ? ((tide?.tideLevel ?? 1) >= 2 ? 2 : 1) : 1,
+      surface: tide ? (tide.range >= 140 ? 3 : tide.range >= 90 ? 2 : tide.range >= 50 ? 1 : 0) : 1,
+      method: spot === "seiga" ? 2 : 3
+    };
+
+    const extras = {
+      tempText: temp?.diff != null ? (Math.abs(temp.diff) <= 0.7 ? "水温安定" : "水温変動あり") : ""
+    };
+
+    return { input, extras };
+  }
+
+  function computeTomorrowInput(spot) {
+    const tide = liveState.tideTomorrow;
+    const wind = liveState.windCurrent;
+    const temp = liveState.tempCurrent;
+
+    const input = {
+      tide: tide?.tideLevel ?? 1,
+      mazume: tide ? (tide.mazumeMove >= 45 ? 3 : tide.mazumeMove >= 20 ? 2 : tide.mazumeMove >= 8 ? 1 : 0) : 1,
+      wind: wind?.level ?? 1,
+      temp: temp?.level ?? 1,
+      bait: spot === "seiga" ? ((tide?.tideLevel ?? 1) >= 2 ? 2 : 1) : 1,
+      surface: tide ? (tide.range >= 140 ? 3 : tide.range >= 90 ? 2 : tide.range >= 50 ? 1 : 0) : 1,
+      method: spot === "seiga" ? 2 : 3
+    };
+
+    const extras = {
+      tempText: temp?.diff != null ? (Math.abs(temp.diff) <= 0.7 ? "水温安定" : "水温変動あり") : ""
+    };
+
+    return { input, extras };
+  }
+
+  function buildWeekInputs(spot) {
+    return liveState.tideWeek.map((tideDay, i) => {
+      const wind = liveState.windCurrent;
+      const temp = liveState.tempCurrent;
+
+      const input = {
+        tide: tideDay?.tideLevel ?? 1,
+        mazume: tideDay ? (tideDay.mazumeMove >= 45 ? 3 : tideDay.mazumeMove >= 20 ? 2 : tideDay.mazumeMove >= 8 ? 1 : 0) : 1,
+        wind: wind?.level ?? 1,
+        temp: temp?.level ?? 1,
+        bait: spot === "seiga" ? ((tideDay?.tideLevel ?? 1) >= 2 ? 2 : 1) : (i % 3 === 0 ? 2 : 1),
+        surface: tideDay ? (tideDay.range >= 140 ? 3 : tideDay.range >= 90 ? 2 : tideDay.range >= 50 ? 1 : 0) : 1,
+        method: i % 4 === 0 ? 3 : 2
+      };
+
+      const extras = {
+        tempText: temp?.diff != null ? (Math.abs(temp.diff) <= 0.7 ? "水温安定" : "水温変動あり") : ""
+      };
 
       return {
-        count: logs.length,
-        successCount: successLogs.length,
-        bestMethod: bestMethod && bestMethod[1] > 0 ? bestMethod[0] : null,
-        bestTime: bestTime && bestTime[1] > 0 ? bestTime[0] : null,
-        methodScore,
-        timeScore
+        date: addDays(new Date(), i),
+        tideDay,
+        input,
+        result: calcWeightedDay(input, spot, extras)
       };
+    });
+  }
+
+  function scoreFishSpecies(spot, result, tideDay, ai) {
+    const base = { ...spotRules[spot].fishBase };
+    const method = result.method;
+    const timeBand = result.timeBand;
+    const tideStrong = (tideDay?.range || 0) >= 90;
+    const mazumeStrong = (tideDay?.mazumeMove || 0) >= 20;
+    const windGood = (liveState.windCurrent?.level || 1) >= 2;
+    const tempStable = (liveState.tempCurrent?.level || 1) >= 1;
+
+    if (tideStrong) {
+      base["ヤズ / ハマチ"] += 2;
+      base["ヒラマサ"] += 1;
+    }
+    if (mazumeStrong) {
+      base["ヤズ / ハマチ"] += 2;
+      base["サゴシ"] += 1;
+      base["ネリゴ"] += 1;
+    }
+    if (windGood) {
+      base["サゴシ"] += 1;
+      base["ヤズ / ハマチ"] += 1;
+    }
+    if (tempStable) {
+      base["ヤズ / ハマチ"] += 1;
+      base["ネリゴ"] += 1;
     }
 
-    function aiMethodBonus(method, ai) {
-      if (!ai.bestMethod) return 0;
-      if (method.includes(ai.bestMethod)) return 1;
-      return 0;
+    if (method.includes("泳がせ")) {
+      base["ヒラマサ"] += 2;
+      base["ネリゴ"] += 2;
+      base["ヤズ / ハマチ"] += 1;
+    }
+    if (method.includes("ルアー")) {
+      base["サゴシ"] += 2;
+      base["ヤズ / ハマチ"] += 1;
+    }
+    if (method.includes("カゴ")) {
+      base["ヤズ / ハマチ"] += 2;
     }
 
-    function aiTimeBonus(timeBandText, ai) {
-      if (!ai.bestTime) return 0;
-      if (timeBandText.includes(ai.bestTime)) return 1;
-      return 0;
+    if (timeBand.includes("朝")) {
+      base["サゴシ"] += 1;
+      base["ヤズ / ハマチ"] += 1;
+    }
+    if (timeBand.includes("夕")) {
+      base["ヤズ / ハマチ"] += 1;
+      base["ネリゴ"] += 1;
     }
 
-    function calcWeightedDay(input, spot) {
-      const w = spotRules[spot].weights;
+    Object.keys(ai.fishScore || {}).forEach(f => {
+      base[f] += ai.fishScore[f] || 0;
+    });
+
+    const ranked = Object.entries(base).sort((a,b) => b[1] - a[1]).map(x => x[0]);
+    return {
+      first: ranked[0] || "-",
+      second: ranked[1] || "-",
+      big: ranked.includes("ヒラマサ") ? "ヒラマサ" : ranked[2] || "-"
+    };
+  }
+
+  function renderFishSpecies(spot, result, tideDay) {
+    const ai = buildAiProfile(spot);
+    const ranked = scoreFishSpecies(spot, result, tideDay, ai);
+    document.getElementById("fishBox").innerHTML = `
+      <div class="fish-title">本日の期待魚種</div>
+      <div class="fish-line">第一候補：${ranked.first}</div>
+      <div class="fish-line">第二候補：${ranked.second}</div>
+      <div class="fish-line">大物期待：${ranked.big}</div>
+    `;
+
+    const map = spotRules[spot].fishMethodMap;
+    document.getElementById("fishMethodBox").innerHTML = `
+      <div class="fish-method-title">魚種ごとのおすすめ釣法</div>
+      <div class="fish-line">${ranked.first} → ${map[ranked.first] || "カゴ＋泳がせ"}</div>
+      <div class="fish-line">${ranked.second} → ${map[ranked.second] || "ルアー＋餌"}</div>
+      <div class="fish-line">${ranked.big} → ${map[ranked.big] || "泳がせ"}</div>
+    `;
+  }
+
+  function renderLabel(obj) {
+    return `<span class="label ${obj.cls}">${obj.text}</span>`;
+  }
+
+  function renderSummary(boxId, title, labelObj, result, tendency, tideDay) {
+    const box = document.getElementById(boxId);
+    const tideExtra = tideDay
+      ? `潮差：${tideDay.range}cm / 朝潮動き ${tideDay.morningMove}cm / 夕潮動き ${tideDay.eveningMove}cm`
+      : "潮データ未取得";
+    box.innerHTML = `
+      ${renderLabel(labelObj)}
+      <div class="score">${result.stars}</div>
+      <div class="meta">
+        <div><strong>${title}</strong></div>
+        <div class="bullet">時間帯：${result.timeBand}</div>
+        <div class="bullet">おすすめ釣法：${result.method}</div>
+        <div class="bullet">コメント：${result.comment}</div>
+        <div class="bullet">潮詳細：${tideExtra}</div>
+        <div class="small" style="margin-top:8px;">補正：${tendency}</div>
+      </div>
+    `;
+  }
+
+  function renderWeek(weekList) {
+    const spot = document.getElementById("spotSelect").value;
+    const box = document.getElementById("weekBox");
+    box.innerHTML = weekList.map(day => {
       const ai = buildAiProfile(spot);
-
-      let raw =
-        input.tide * w.tide +
-        input.mazume * w.mazume +
-        input.wind * w.wind +
-        input.temp * w.temp +
-        input.bait * w.bait +
-        input.surface * w.surface +
-        input.method * w.method;
-
-      const tempMethod = methodRecommend(input);
-      const tempTime = timeBand(input);
-
-      raw += aiMethodBonus(tempMethod, ai) * 6;
-      raw += aiTimeBonus(tempTime, ai) * 5;
-
-      const score = normalizeWeightedScore(raw);
-
-      return {
-        raw,
-        score,
-        stars: starText(score),
-        band: bandLabel(score),
-        method: tempMethod,
-        timeBand: tempTime,
-        comment: commentText(input, spot),
-        ai
-      };
-    }
-
-    function buildDynamicWeekData(spot) {
-      const base = new Date();
-      const windLevel = liveState.windInfo?.level ?? null;
-      const tideLevel = liveState.tideInfo?.level ?? null;
-
-      const patterns = [];
-
-      for (let i = 0; i < 7; i++) {
-        const tide = i % 3 === 0 ? 3 : i % 2 === 0 ? 1 : 2;
-        const mazume = i % 4 === 0 ? 3 : i % 3 === 0 ? 2 : 1;
-        const wind = windLevel != null ? windLevel : (spot === "funakoshi" ? 2 : 1);
-        const temp = 1;
-        const bait = spot === "seiga" ? (i % 2 === 0 ? 2 : 1) : (i % 3 === 0 ? 2 : 1);
-        const surface = tideLevel != null ? Math.max(0, tideLevel - 1) : (i % 2 === 0 ? 2 : 1);
-        const method = i % 4 === 0 ? 3 : 2;
-
-        patterns.push({ tide, mazume, wind, temp, bait, surface, method });
-      }
-
-      return patterns.map((p, i) => ({
-        date: addDays(base, i),
-        input: p,
-        result: calcWeightedDay(p, spot)
-      }));
-    }
-
-    function renderLabel(obj) {
-      return `<span class="label ${obj.cls}">${obj.text}</span>`;
-    }
-
-    function renderSummary(boxId, title, labelObj, result, tendency) {
-      const box = document.getElementById(boxId);
-      box.innerHTML = `
-        ${renderLabel(labelObj)}
-        <div class="score">${result.stars}</div>
-        <div class="meta">
-          <div><strong>${title}</strong></div>
-          <div class="bullet">時間帯：${result.timeBand}</div>
-          <div class="bullet">おすすめ釣法：${result.method}</div>
-          <div class="bullet">コメント：${result.comment}</div>
-          <div class="small" style="margin-top:8px;">補正：${tendency}</div>
-        </div>
-      `;
-    }
-
-    function renderWeek(list) {
-      const weekBox = document.getElementById("weekBox");
-      weekBox.innerHTML = list.map(day => `
+      const fish = scoreFishSpecies(spot, day.result, day.tideDay, ai);
+      const map = spotRules[spot].fishMethodMap;
+      return `
         <div class="day-card">
           <div class="day-top">
             <div class="day-date">${fmtDate(day.date)}</div>
@@ -662,261 +1009,286 @@
           </div>
           <div class="small">${day.result.band} / ${day.result.timeBand}</div>
           <div class="bullet">${day.result.comment}</div>
+          <div class="bullet">潮差：${day.tideDay ? day.tideDay.range : "-"}cm / 朝 ${day.tideDay ? day.tideDay.morningMove : "-"}cm / 夕 ${day.tideDay ? day.tideDay.eveningMove : "-"}cm</div>
+          <div class="bullet">期待魚種：${fish.first} / ${fish.second}</div>
+          <div class="bullet">魚種別釣法：${fish.first} → ${map[fish.first] || "カゴ＋泳がせ"}</div>
           <div class="method">おすすめ：${day.result.method}</div>
         </div>
-      `).join("");
-    }
-
-    function renderHero(today, spot) {
-      const labelObj = todayJudgeLabel(today.result.score + 7);
-      document.getElementById("heroLabel").textContent = labelObj.text;
-      document.getElementById("heroScore").textContent = today.result.stars;
-      document.getElementById("heroMethod").textContent = `おすすめ：${today.result.method}`;
-      document.getElementById("heroComment").textContent = today.result.comment;
-      document.getElementById("heroNote").textContent = `${spotRules[spot].name} / ${spotRules[spot].tendency}`;
-    }
-
-    function renderAiSummary(spot) {
-      const ai = buildAiProfile(spot);
-      const box = document.getElementById("aiSummary");
-
-      if (ai.count === 0) {
-        box.textContent = "まだ十分な学習データがありません。釣果ログを保存すると補正がかかります。";
-        return;
-      }
-
-      box.innerHTML = `
-        ログ件数：${ai.count}件 / 反応あり以上：${ai.successCount}件<br>
-        得意時間帯：${ai.bestTime || "未判定"}<br>
-        得意釣法：${ai.bestMethod || "未判定"}<br>
-        その条件に合う日は、週間おすすめに少し加点します。
       `;
+    }).join("");
+  }
+
+  function renderHero(today, spot) {
+    const labelObj = todayJudgeLabel(today.result.score + 7);
+    document.getElementById("heroLabel").textContent = labelObj.text;
+    document.getElementById("heroScore").textContent = today.result.stars;
+    document.getElementById("heroMethod").textContent = `おすすめ：${today.result.method}`;
+    document.getElementById("heroComment").textContent = today.result.comment;
+    document.getElementById("heroNote").textContent = `${spotRules[spot].name} / ${spotRules[spot].tendency}`;
+  }
+
+  function renderAiSummary(spot) {
+    const ai = buildAiProfile(spot);
+    const box = document.getElementById("aiSummary");
+
+    if (ai.count === 0) {
+      box.textContent = "まだ十分な学習データがありません。釣果ログを保存すると補正がかかります。";
+      return;
     }
 
-    function renderAll() {
-      const spot = document.getElementById("spotSelect").value;
-      const week = buildDynamicWeekData(spot);
-      const tendency = spotRules[spot].tendency;
+    box.innerHTML = `
+      ログ件数：${ai.count}件 / 反応あり以上：${ai.successCount}件<br>
+      得意時間帯：${ai.bestTime || "未判定"}<br>
+      得意釣法：${ai.bestMethod || "未判定"}<br>
+      過去に多い魚種傾向も、期待魚種の並びに少し反映します。
+    `;
+  }
 
-      const today = week[0];
-      const tomorrow = week[1];
+  function renderAll() {
+    const spot = document.getElementById("spotSelect").value;
+    const tendency = spotRules[spot].tendency;
 
-      renderHero(today, spot);
+    const todayData = computeTodayInput(spot);
+    const tomorrowData = computeTomorrowInput(spot);
+    const todayResult = calcWeightedDay(todayData.input, spot, todayData.extras);
+    const tomorrowResult = calcWeightedDay(tomorrowData.input, spot, tomorrowData.extras);
+    const weekList = buildWeekInputs(spot);
 
-      renderSummary(
-        "todayBox",
-        "今日の総合判定",
-        todayJudgeLabel(today.result.score + 7),
-        today.result,
-        tendency
-      );
+    renderHero({ result: todayResult }, spot);
+    renderSummary("todayBox", "今日の総合判定", todayJudgeLabel(todayResult.score + 7), todayResult, tendency, liveState.tideToday);
+    renderSummary("tomorrowBox", "明日の前日予測", tomorrowJudgeLabel(tomorrowResult.score + 5), tomorrowResult, tendency, liveState.tideTomorrow);
+    renderWeek(weekList);
+    renderAiSummary(spot);
+    renderFishSpecies(spot, todayResult, liveState.tideToday);
 
-      renderSummary(
-        "tomorrowBox",
-        "明日の前日予測",
-        tomorrowJudgeLabel(tomorrow.result.score + 5),
-        tomorrow.result,
-        tendency
-      );
+    document.getElementById("statusText").textContent =
+      `${spotRules[spot].name} のおすすめを更新しました。潮・風・水温・期待魚種・魚種別釣法・AI補正を反映しています。`;
+    document.getElementById("liveTide").textContent =
+      liveState.tideToday
+        ? `${spotRules[spot].tideStation} / 潮差 ${liveState.tideToday.range}cm / 朝 ${liveState.tideToday.morningMove}cm / 夕 ${liveState.tideToday.eveningMove}cm`
+        : `${spotRules[spot].tideStation} / 未取得`;
+    document.getElementById("liveWind").textContent =
+      liveState.windCurrent?.text || "未取得";
+    document.getElementById("liveTemp").textContent =
+      liveState.tempCurrent?.text || "未取得";
+    document.getElementById("liveMethod").textContent = todayResult.method;
+    document.getElementById("logSpot").value = spot;
+  }
 
-      renderWeek(week);
-      renderAiSummary(spot);
+  function saveLog() {
+    const spot = document.getElementById("logSpot").value;
+    const log = {
+      date: document.getElementById("logDate").value || ymd(),
+      spot,
+      spotName: spotRules[spot].name,
+      timeBand: document.getElementById("logTimeBand").value,
+      method: document.getElementById("logMethod").value,
+      result: document.getElementById("logResult").value,
+      fish: document.getElementById("logFish").value.trim(),
+      memo: document.getElementById("logMemo").value.trim()
+    };
 
-      document.getElementById("statusText").textContent =
-        `${spotRules[spot].name} のおすすめを更新しました。風APIと釣果AI補正を反映しています。`;
-      document.getElementById("liveTide").textContent =
-        liveState.tideInfo?.text || `${spotRules[spot].tideStation} / 未取得`;
-      document.getElementById("liveWind").textContent =
-        liveState.windInfo?.text || "未取得";
-      document.getElementById("liveTemp").textContent =
-        liveState.tempInfo?.text || "未取得";
-      document.getElementById("liveMethod").textContent = today.result.method;
-      document.getElementById("logSpot").value = spot;
-    }
+    const logs = getLogs();
+    logs.push(log);
+    setLogs(logs);
 
-    function directionLabel(deg) {
-      if (deg == null || Number.isNaN(Number(deg))) return "-";
-      const d = Number(deg);
-      if (d >= 337.5 || d < 22.5) return "北";
-      if (d < 67.5) return "北東";
-      if (d < 112.5) return "東";
-      if (d < 157.5) return "南東";
-      if (d < 202.5) return "南";
-      if (d < 247.5) return "南西";
-      if (d < 292.5) return "西";
-      return "北西";
-    }
-
-    function parseMsilTide(raw) {
-      const start = new Date(raw.time);
-      const intervalSec = Number(raw.interval || 60);
-      const tide = Array.isArray(raw.tide) ? raw.tide : [];
-      if (!raw.time || tide.length === 0) return null;
-
-      const now = new Date();
-      const points = tide.map((v, i) => ({
-        time: new Date(start.getTime() + i * intervalSec * 1000),
-        level: Number(v)
-      }));
-
-      const future = points.filter(p => p.time >= now);
-      const current = future[0] || points[0];
-      const later = future.find(p => p.time >= new Date(current.time.getTime() + 2 * 60 * 60 * 1000)) || future[future.length - 1] || current;
-
-      const diff = later.level - current.level;
-      const abs = Math.abs(diff);
-
-      let tideText = "潮弱い";
-      let level = 0;
-      if (abs >= 50) { tideText = "潮かなり動く"; level = 3; }
-      else if (abs >= 25) { tideText = "潮が動く"; level = 2; }
-      else if (abs >= 10) { tideText = "潮まずまず"; level = 1; }
-
-      return {
-        stationCode: raw.stationCode,
-        diff: Math.round(abs),
-        direction: diff > 0 ? "上げ" : diff < 0 ? "下げ" : "停滞",
-        tideText,
-        level,
-        text: `${raw.stationCode} / ${tideText} / ${diff > 0 ? "上げ" : diff < 0 ? "下げ" : "停滞"} / 2時間差 ${Math.round(abs)}cm`
-      };
-    }
-
-    async function fetchTideData(spot) {
-      const res = await fetch(`/api/msil-tide?spot=${encodeURIComponent(spot)}`);
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`潮取得失敗: ${txt.slice(0, 120)}`);
-      }
-      return await res.json();
-    }
-
-    async function fetchWindData(spot) {
-      const info = spotRules[spot];
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${info.lat}&longitude=${info.lon}&current=wind_speed_10m,wind_direction_10m&timezone=Asia%2FTokyo`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("風取得失敗");
-      const json = await res.json();
-      const current = json.current || {};
-      const speed = current.wind_speed_10m;
-      const dir = current.wind_direction_10m;
-
-      let level = 1;
-      if (speed <= 3) level = 3;
-      else if (speed <= 6) level = 2;
-      else if (speed <= 9) level = 1;
-      else level = 0;
-
-      return {
-        speed,
-        dir,
-        level,
-        text: `${directionLabel(dir)} ${speed ?? "-"} m/s`
-      };
-    }
-
-    async function fetchLiveData() {
-      const spot = document.getElementById("spotSelect").value;
-      document.getElementById("statusText").textContent = "実データ取得中です…";
-
-      try {
-        const [tideRaw, windRaw] = await Promise.all([
-          fetchTideData(spot),
-          fetchWindData(spot)
-        ]);
-
-        liveState.tideInfo = parseMsilTide(tideRaw);
-        liveState.windInfo = windRaw;
-        liveState.tempInfo = { text: "次段階で接続" };
-
-        document.getElementById("liveDataNote").textContent =
-          "潮は MSIL、風は Open-Meteo から取得しました。水温は次段階で接続します。";
-        document.getElementById("statusText").textContent = "実データを更新しました。";
-
-        renderAll();
-      } catch (err) {
-        document.getElementById("statusText").textContent = "実データ更新でエラーが出ました。";
-        document.getElementById("liveDataNote").textContent = String(err);
-      }
-    }
-
-    function renderLogs() {
-      const logs = getLogs();
-      const box = document.getElementById("logList");
-
-      if (logs.length === 0) {
-        box.innerHTML = `<div class="small">まだログはありません。</div>`;
-        return;
-      }
-
-      box.innerHTML = logs.slice().reverse().map((log, idx) => `
-        <div class="log-item">
-          <div class="log-head">
-            <div class="log-title">${log.date} / ${log.spotName} / ${log.timeBand}</div>
-            <button class="danger" onclick="deleteLog(${logs.length - 1 - idx})">削除</button>
-          </div>
-          <div class="small">釣法：${log.method} / 結果：${log.result}</div>
-          <div class="bullet">${log.fish || "魚種・サイズ未入力"}</div>
-          <div class="small">${log.memo || "メモなし"}</div>
-        </div>
-      `).join("");
-    }
-
-    function saveLog() {
-      const spot = document.getElementById("logSpot").value;
-      const log = {
-        date: document.getElementById("logDate").value || ymd(),
-        spot,
-        spotName: spotRules[spot].name,
-        timeBand: document.getElementById("logTimeBand").value,
-        method: document.getElementById("logMethod").value,
-        result: document.getElementById("logResult").value,
-        fish: document.getElementById("logFish").value.trim(),
-        memo: document.getElementById("logMemo").value.trim()
-      };
-
-      const logs = getLogs();
-      logs.push(log);
-      setLogs(logs);
-      renderLogs();
-      renderAiSummary(document.getElementById("spotSelect").value);
-      renderAll();
-
-      document.getElementById("statusText").textContent = "釣果ログを保存しました。";
-      document.getElementById("logFish").value = "";
-      document.getElementById("logMemo").value = "";
-    }
-
-    function clearLogs() {
-      if (!confirm("全ログを削除しますか？")) return;
-      localStorage.removeItem(LOG_KEY);
-      renderLogs();
-      renderAiSummary(document.getElementById("spotSelect").value);
-      renderAll();
-      document.getElementById("statusText").textContent = "全ログを削除しました。";
-    }
-
-    function deleteLog(index) {
-      const logs = getLogs();
-      logs.splice(index, 1);
-      setLogs(logs);
-      renderLogs();
-      renderAiSummary(document.getElementById("spotSelect").value);
-      renderAll();
-      document.getElementById("statusText").textContent = "ログを削除しました。";
-    }
-
-    window.deleteLog = deleteLog;
-
-    document.getElementById("spotSelect").addEventListener("change", renderAll);
-    document.getElementById("refreshBtn").addEventListener("click", renderAll);
-    document.getElementById("fetchBtn").addEventListener("click", fetchLiveData);
-    document.getElementById("saveLogBtn").addEventListener("click", saveLog);
-    document.getElementById("clearLogBtn").addEventListener("click", clearLogs);
-
-    document.getElementById("logDate").value = ymd();
-    renderAll();
+    document.getElementById("logFish").value = "";
+    document.getElementById("logMemo").value = "";
     renderLogs();
-  </script>
+    renderAll();
+    document.getElementById("statusText").textContent = "釣果ログを保存しました。";
+  }
+
+  function clearLogs() {
+    if (!confirm("全ログを削除しますか？")) return;
+    localStorage.removeItem(LOG_KEY);
+    renderLogs();
+    renderAll();
+    document.getElementById("statusText").textContent = "全ログを削除しました。";
+  }
+
+  function deleteLog(index) {
+    const logs = getLogs();
+    logs.splice(index, 1);
+    setLogs(logs);
+    renderLogs();
+    renderAll();
+    document.getElementById("statusText").textContent = "ログを削除しました。";
+  }
+
+  function renderLogs() {
+    const logs = getLogs();
+    const box = document.getElementById("logList");
+
+    if (logs.length === 0) {
+      box.innerHTML = `<div class="small">まだログはありません。</div>`;
+      return;
+    }
+
+    box.innerHTML = logs.slice().reverse().map((log, idx) => `
+      <div class="log-item">
+        <div class="log-head">
+          <div class="log-title">${log.date} / ${log.spotName} / ${log.timeBand}</div>
+          <button class="danger" onclick="deleteLog(${logs.length - 1 - idx})">削除</button>
+        </div>
+        <div class="small">釣法：${log.method} / 結果：${log.result}</div>
+        <div class="bullet">${log.fish || "魚種・サイズ未入力"}</div>
+        <div class="small">${log.memo || "メモなし"}</div>
+      </div>
+    `).join("");
+  }
+
+  window.deleteLog = deleteLog;
+
+  async function fetchTideForDate(spot, dateObj) {
+    const date = ymdCompact(dateObj);
+    const res = await fetch(`/api/msil-tide?spot=${encodeURIComponent(spot)}&date=${date}`);
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`潮取得失敗: ${txt.slice(0,140)}`);
+    }
+    return await res.json();
+  }
+
+  async function fetchTideWeek(spot) {
+    const base = new Date();
+    const arr = [];
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(base, i);
+      const raw = await fetchTideForDate(spot, d);
+      arr.push(analyzeTideDay(raw, d));
+    }
+    return arr;
+  }
+
+  async function fetchWindWeather(spot) {
+    const info = spotRules[spot];
+    const url =
+      `https://api.open-meteo.com/v1/forecast?latitude=${info.lat}&longitude=${info.lon}` +
+      `&current=wind_speed_10m,wind_direction_10m&timezone=Asia%2FTokyo&forecast_days=8`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("風取得失敗");
+    return await res.json();
+  }
+
+  async function fetchMarineTemp(spot) {
+    const info = spotRules[spot];
+    const url =
+      `https://marine-api.open-meteo.com/v1/marine?latitude=${info.lat}&longitude=${info.lon}` +
+      `&current=sea_surface_temperature&hourly=sea_surface_temperature&timezone=Asia%2FTokyo&past_days=1&forecast_days=8`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("水温取得失敗");
+    return await res.json();
+  }
+
+  function windLevelFromCurrent(speed, dir, spot) {
+    const dirText = directionLabel(dir);
+    const rule = spotRules[spot];
+
+    let base = 1;
+    if (speed <= 3) base = 3;
+    else if (speed <= 6) base = 2;
+    else if (speed <= 9) base = 1;
+    else base = 0;
+
+    if (rule.favorableDirs.includes(dirText)) base += 1;
+    if (rule.badDirs.includes(dirText)) base -= 1;
+
+    if (base > 3) base = 3;
+    if (base < 0) base = 0;
+
+    return {
+      level: base,
+      dirText,
+      speed,
+      text: `${dirText} ${speed ?? "-"} m/s`
+    };
+  }
+
+  function extractYesterdaySameHourTemp(marineJson) {
+    const current = marineJson.current?.sea_surface_temperature;
+    const nowTime = marineJson.current?.time;
+    const times = marineJson.hourly?.time || [];
+    const temps = marineJson.hourly?.sea_surface_temperature || [];
+    if (!nowTime || !Array.isArray(times) || !Array.isArray(temps)) return { current, prev: null };
+
+    const now = new Date(nowTime);
+    const target = new Date(now);
+    target.setDate(target.getDate() - 1);
+
+    const iso = target.toISOString().slice(0, 13);
+    const idx = times.findIndex(t => String(t).slice(0, 13) === iso);
+
+    return {
+      current,
+      prev: idx >= 0 ? temps[idx] : null
+    };
+  }
+
+  function tempLevelFromMarine(currentTemp, yesterdaySameHourTemp) {
+    if (currentTemp == null) return { level: 1, text: "未取得", diff: null };
+
+    let diff = null;
+    if (yesterdaySameHourTemp != null) diff = Number((currentTemp - yesterdaySameHourTemp).toFixed(1));
+
+    let level = 1;
+    if (diff == null) level = 1;
+    else if (Math.abs(diff) <= 0.7) level = 2;
+    else if (Math.abs(diff) <= 1.5) level = 1;
+    else level = 0;
+
+    const text = diff == null
+      ? `${currentTemp.toFixed(1)}℃`
+      : `${currentTemp.toFixed(1)}℃ / 前日差 ${diff > 0 ? "+" : ""}${diff.toFixed(1)}℃`;
+
+    return { level, text, diff };
+  }
+
+  async function fetchLiveData() {
+    const spot = document.getElementById("spotSelect").value;
+    document.getElementById("statusText").textContent = "実データ取得中です…";
+
+    try {
+      const [tideWeek, windJson, marineJson] = await Promise.all([
+        fetchTideWeek(spot),
+        fetchWindWeather(spot),
+        fetchMarineTemp(spot)
+      ]);
+
+      liveState.tideWeek = tideWeek;
+      liveState.tideToday = tideWeek[0] || null;
+      liveState.tideTomorrow = tideWeek[1] || null;
+
+      const windCurrent = windJson.current || {};
+      liveState.windCurrent = windLevelFromCurrent(
+        windCurrent.wind_speed_10m,
+        windCurrent.wind_direction_10m,
+        spot
+      );
+
+      const marineTemp = extractYesterdaySameHourTemp(marineJson);
+      liveState.tempCurrent = tempLevelFromMarine(marineTemp.current, marineTemp.prev);
+
+      document.getElementById("liveDataNote").textContent =
+        "潮は MSIL、風は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。";
+      document.getElementById("statusText").textContent = "実データを更新しました。";
+
+      renderAll();
+    } catch (err) {
+      document.getElementById("statusText").textContent = "実データ更新でエラーが出ました。";
+      document.getElementById("liveDataNote").textContent = String(err);
+    }
+  }
+
+  document.getElementById("spotSelect").addEventListener("change", renderAll);
+  document.getElementById("refreshBtn").addEventListener("click", renderAll);
+  document.getElementById("fetchBtn").addEventListener("click", fetchLiveData);
+  document.getElementById("saveLogBtn").addEventListener("click", saveLog);
+  document.getElementById("clearLogBtn").addEventListener("click", clearLogs);
+
+  document.getElementById("logDate").value = ymd();
+  renderLogs();
+  renderAll();
+</script>
 </body>
 </html>
