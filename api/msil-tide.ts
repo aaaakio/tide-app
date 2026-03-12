@@ -1,69 +1,146 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { NextApiRequest, NextApiResponse } from "next";
 
-const STATION_MAP: Record<string, { stationCode: string; stationName: string }> = {
-  seiga: { stationCode: "4101", stationName: "唐津" },
-  funakoshi: { stationCode: "4101", stationName: "唐津" },
+type ErrorResponse = {
+  error: string;
+  detail?: string;
 };
 
-function yyyymmddJst(date = new Date()) {
-  const jst = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
-  const y = jst.getFullYear();
-  const m = String(jst.getMonth() + 1).padStart(2, "0");
-  const d = String(jst.getDate()).padStart(2, "0");
-  return `${y}${m}${d}`;
+type SpotConfig = {
+  label: string;
+  stationCode: string;
+};
+
+const SPOT_MAP: Record<string, SpotConfig> = {
+  // 新表記
+  hoshiga: {
+    label: "星賀",
+    stationCode: "4101", // 唐津
+  },
+  funakoshi: {
+    label: "船越",
+    stationCode: "4101", // 唐津
+  },
+
+  // 旧表記も受ける（互換対応）
+  seiga: {
+    label: "星賀",
+    stationCode: "4101", // 唐津
+  },
+};
+
+function sendError(
+  res: NextApiResponse<ErrorResponse>,
+  status: number,
+  error: string,
+  detail?: string
+) {
+  return res.status(status).json(
+    detail ? { error, detail } : { error }
+  );
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+function normalizeSpot(rawSpot: unknown): string {
+  return String(rawSpot || "").trim().toLowerCase();
+}
+
+function isValidDate(date: string): boolean {
+  return /^\d{8}$/.test(date);
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   if (req.method !== "GET") {
-    res.setHeader("Allow", "GET");
-    return res.status(405).json({ error: "Method Not Allowed" });
+    return sendError(res, 405, "Method not allowed");
   }
 
-  const key = process.env.MSIL_SUBSCRIPTION_KEY;
-  if (!key) {
-    return res.status(500).json({ error: "Missing MSIL_SUBSCRIPTION_KEY" });
-  }
+  try {
+    const rawSpot = normalizeSpot(req.query.spot);
+    const date = String(req.query.date || "").trim();
 
-  const spot = String(req.query.spot ?? "seiga");
-  const stationMeta = STATION_MAP[spot];
+    if (!rawSpot) {
+      return sendError(res, 400, "Missing spot");
+    }
 
-  if (!stationMeta) {
-    return res.status(400).json({ error: `Unknown spot: ${spot}` });
-  }
+    if (!date) {
+      return sendError(res, 400, "Missing date");
+    }
 
-  const stationCode = String(req.query.stationCode ?? stationMeta.stationCode);
-  const date = String(req.query.date ?? yyyymmddJst());
+    if (!isValidDate(date)) {
+      return sendError(
+        res,
+        400,
+        "Invalid date format",
+        "date must be YYYYMMDD"
+      );
+    }
 
-  const url = new URL("https://api.msil.go.jp/tide-prediction/v3/data");
-  url.searchParams.set("stationCode", stationCode);
-  url.searchParams.set("date", date);
+    const spotConfig = SPOT_MAP[rawSpot];
 
-  const upstream = await fetch(url.toString(), {
-    headers: {
-      "Ocp-Apim-Subscription-Key": key,
-      Accept: "application/json",
-      "Cache-Control": "no-cache",
-    },
-  });
+    if (!spotConfig) {
+      return sendError(res, 400, `Unknown spot: ${rawSpot}`);
+    }
 
-  const text = await upstream.text();
+    const subscriptionKey = process.env.MSIL_SUBSCRIPTION_KEY;
+    if (!subscriptionKey) {
+      return sendError(
+        res,
+        500,
+        "Missing environment variable",
+        "MSIL_SUBSCRIPTION_KEY is not set"
+      );
+    }
 
-  if (!upstream.ok) {
-    return res.status(upstream.status).json({
-      error: "MSIL upstream error",
-      body: text.slice(0, 2000),
+    const baseUrl = "https://api.msil.go.jp/tide/v3/data";
+    const url = `${baseUrl}?stationCode=${encodeURIComponent(
+      spotConfig.stationCode
+    )}&date=${encodeURIComponent(date)}`;
+
+    const upstream = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Ocp-Apim-Subscription-Key": subscriptionKey,
+        "Accept": "application/json",
+      },
     });
+
+    const text = await upstream.text();
+
+    if (!upstream.ok) {
+      return sendError(
+        res,
+        upstream.status,
+        "MSIL request failed",
+        text.slice(0, 500)
+      );
+    }
+
+    let data: any;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return sendError(
+        res,
+        502,
+        "Invalid JSON from MSIL",
+        text.slice(0, 500)
+      );
+    }
+
+    return res.status(200).json({
+      ...data,
+      requestedSpot: rawSpot,
+      normalizedSpot: rawSpot === "seiga" ? "hoshiga" : rawSpot,
+      spotLabel: spotConfig.label,
+      stationCode: spotConfig.stationCode,
+    });
+  } catch (err: any) {
+    return sendError(
+      res,
+      500,
+      "Internal server error",
+      err?.message || String(err)
+    );
   }
-
-  const raw = JSON.parse(text);
-
-  return res.status(200).json({
-    source: "msil",
-    stationName: stationMeta.stationName,
-    stationCode: raw.stationCode,
-    time: raw.time,
-    interval: raw.interval,
-    tide: raw.tide,
-    fetchedAt: new Date().toISOString(),
-  });
 }
