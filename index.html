@@ -1,17 +1,394 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>潮汐アプリ</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>星賀・船越 青物攻略チェックアプリ</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    h1 {
+      font-size: 22px;
+      margin: 0 0 8px;
+    }
+    h2 {
+      font-size: 18px;
+      margin: 0 0 12px;
+    }
+    .sub {
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    .panel {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    select, button {
+      font-size: 16px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+    }
+    button {
+      background: #111827;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .status {
+      font-size: 14px;
+      color: #4b5563;
+      margin-top: 8px;
+    }
+    .score {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .label {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #e0f2fe;
+      color: #075985;
+      margin-bottom: 10px;
+    }
+    .meta {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #374151;
+    }
+    .week-grid {
+      display: grid;
+      gap: 10px;
+    }
+    .day-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px;
+      background: #fcfcfd;
+    }
+    .day-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .day-date {
+      font-weight: 700;
+    }
+    .day-stars {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .small {
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .method {
+      margin-top: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #111827;
+    }
+    .footer-note {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+  </style>
 </head>
-
 <body>
+  <div class="wrap">
+    <h1>星賀・船越 青物攻略チェックアプリ</h1>
+    <div class="sub">前日予測 / 当日判断 / 1週間おすすめ</div>
 
-<h1>潮汐アプリ</h1>
+    <div class="panel">
+      <div class="row">
+        <label for="spotSelect">場所</label>
+        <select id="spotSelect">
+          <option value="seiga">星賀漁港</option>
+          <option value="funakoshi">船越漁港</option>
+        </select>
 
-<p>テスト成功</p>
+        <button id="refreshBtn">おすすめを更新</button>
+      </div>
+      <div class="status" id="statusText">初期表示中です。</div>
+    </div>
 
-<p>このページが表示されたらVercel公開成功です。</p>
+    <div class="panel">
+      <h2>今日の当日判断</h2>
+      <div id="todayBox"></div>
+    </div>
 
+    <div class="panel">
+      <h2>明日の前日予測</h2>
+      <div id="tomorrowBox"></div>
+    </div>
+
+    <div class="panel">
+      <h2>今日から1週間おすすめ</h2>
+      <div class="week-grid" id="weekBox"></div>
+    </div>
+
+    <div class="panel">
+      <div class="footer-note">
+        現段階は「判定アルゴリズムの土台」です。<br>
+        次段階で、潮汐は MSIL、風は予報API、水温は海況データへ接続します。<br>
+        釣法は「カゴ / 餌 / ルアー / 泳がせ」を独立で扱っています。
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const spotRules = {
+      seiga: {
+        name: "星賀漁港",
+        weights: { tide: 3, mazume: 3, wind: 2, temp: 2, bait: 3, surface: 3, method: 2 },
+        tendency: "回遊待ち重視。潮・まずめ・ベイト・海面変化を強く評価。",
+      },
+      funakoshi: {
+        name: "船越漁港",
+        weights: { tide: 2, mazume: 2, wind: 3, temp: 2, bait: 2, surface: 2, method: 3 },
+        tendency: "風と立ち位置相性を重視。潮が弱い日でも釣法の工夫を評価。",
+      }
+    };
+
+    function addDays(base, plus) {
+      const d = new Date(base);
+      d.setDate(d.getDate() + plus);
+      return d;
+    }
+
+    function fmtDate(d) {
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+      const w = ["日","月","火","水","木","金","土"][d.getDay()];
+      return `${m}/${day}（${w}）`;
+    }
+
+    function starText(score) {
+      if (score >= 8) return "★★★";
+      if (score >= 5) return "★★";
+      return "★";
+    }
+
+    function bandLabel(score) {
+      if (score >= 8) return "本命";
+      if (score >= 5) return "候補";
+      return "見送り寄り";
+    }
+
+    function todayJudgeLabel(score) {
+      if (score >= 15) return "GO";
+      if (score >= 11) return "朝夕まずめだけGO";
+      if (score >= 7) return "短時間様子見";
+      return "見送り";
+    }
+
+    function tomorrowJudgeLabel(score) {
+      if (score >= 13) return "本命日";
+      if (score >= 9) return "候補日";
+      if (score >= 6) return "短時間候補";
+      return "見送り寄り";
+    }
+
+    function methodRecommend(input) {
+      if (input.bait >= 2 && input.surface >= 2 && input.tide >= 2) {
+        return "カゴ＋泳がせ";
+      }
+      if (input.bait >= 2 && input.surface >= 2) {
+        return "ルアー＋泳がせ";
+      }
+      if (input.tide >= 2 && input.mazume >= 2) {
+        return "カゴ＋餌";
+      }
+      if (input.surface >= 2) {
+        return "ルアー短時間";
+      }
+      return "餌＋カゴ";
+    }
+
+    function timeBand(input) {
+      if (input.mazume === 3) return "朝本命";
+      if (input.mazume === 2) return "夕方候補";
+      if (input.mazume === 1) return "朝夕候補";
+      return "終日弱め";
+    }
+
+    function commentText(input, spot) {
+      const parts = [];
+      if (input.tide >= 2) parts.push("潮が動く");
+      else if (input.tide === 1) parts.push("潮まずまず");
+      else parts.push("潮弱い");
+
+      if (input.wind >= 2) parts.push("風良い");
+      else if (input.wind === 1) parts.push("風やや不利");
+      else parts.push("風不利");
+
+      if (spot === "seiga") {
+        if (input.bait >= 2) parts.push("ベイト期待");
+        if (input.surface >= 2) parts.push("海面変化あり");
+      } else {
+        if (input.method >= 2) parts.push("釣法の自由度あり");
+      }
+
+      return parts.join("。");
+    }
+
+    function normalizeWeightedScore(raw) {
+      if (raw >= 75) return 9;
+      if (raw >= 58) return 7;
+      if (raw >= 42) return 5;
+      if (raw >= 28) return 3;
+      return 1;
+    }
+
+    function calcWeightedDay(input, spot) {
+      const w = spotRules[spot].weights;
+      const raw =
+        input.tide * w.tide +
+        input.mazume * w.mazume +
+        input.wind * w.wind +
+        input.temp * w.temp +
+        input.bait * w.bait +
+        input.surface * w.surface +
+        input.method * w.method;
+
+      const score = normalizeWeightedScore(raw);
+      return {
+        raw,
+        score,
+        stars: starText(score),
+        band: bandLabel(score),
+        method: methodRecommend(input),
+        timeBand: timeBand(input),
+        comment: commentText(input, spot),
+      };
+    }
+
+    function buildDummyWeekData(spot) {
+      // まずはダミー。
+      // 次段階で MSIL / 風 / 水温 API に置換。
+      const base = new Date();
+      const patterns = spot === "seiga"
+        ? [
+            { tide: 3, mazume: 3, wind: 2, temp: 2, bait: 2, surface: 2, method: 2 },
+            { tide: 2, mazume: 2, wind: 1, temp: 2, bait: 2, surface: 1, method: 2 },
+            { tide: 1, mazume: 1, wind: 1, temp: 1, bait: 1, surface: 1, method: 1 },
+            { tide: 2, mazume: 1, wind: 2, temp: 2, bait: 1, surface: 1, method: 2 },
+            { tide: 3, mazume: 2, wind: 2, temp: 2, bait: 3, surface: 2, method: 3 },
+            { tide: 2, mazume: 2, wind: 2, temp: 1, bait: 2, surface: 2, method: 2 },
+            { tide: 1, mazume: 0, wind: 1, temp: 1, bait: 0, surface: 0, method: 1 },
+          ]
+        : [
+            { tide: 2, mazume: 2, wind: 3, temp: 2, bait: 2, surface: 1, method: 3 },
+            { tide: 2, mazume: 1, wind: 2, temp: 2, bait: 1, surface: 1, method: 2 },
+            { tide: 1, mazume: 1, wind: 1, temp: 1, bait: 1, surface: 1, method: 1 },
+            { tide: 2, mazume: 2, wind: 2, temp: 2, bait: 2, surface: 1, method: 3 },
+            { tide: 3, mazume: 2, wind: 2, temp: 2, bait: 2, surface: 2, method: 3 },
+            { tide: 2, mazume: 2, wind: 3, temp: 1, bait: 1, surface: 1, method: 2 },
+            { tide: 1, mazume: 0, wind: 1, temp: 1, bait: 0, surface: 0, method: 1 },
+          ];
+
+      return patterns.map((p, i) => ({
+        date: addDays(base, i),
+        input: p,
+        result: calcWeightedDay(p, spot),
+      }));
+    }
+
+    function renderSummary(box, title, score, label, result, tendency) {
+      box.innerHTML = `
+        <div class="label">${label}</div>
+        <div class="score">${result.stars}</div>
+        <div class="meta">
+          <div><strong>${title}</strong></div>
+          <div>時間帯：${result.timeBand}</div>
+          <div>おすすめ釣法：${result.method}</div>
+          <div>コメント：${result.comment}</div>
+          <div class="small">補正：${tendency}</div>
+        </div>
+      `;
+    }
+
+    function renderWeek(list) {
+      const weekBox = document.getElementById("weekBox");
+      weekBox.innerHTML = list.map(day => `
+        <div class="day-card">
+          <div class="day-top">
+            <div class="day-date">${fmtDate(day.date)}</div>
+            <div class="day-stars">${day.result.stars}</div>
+          </div>
+          <div class="small">${day.result.band} / ${day.result.timeBand}</div>
+          <div>${day.result.comment}</div>
+          <div class="method">おすすめ：${day.result.method}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderAll() {
+      const spot = document.getElementById("spotSelect").value;
+      const week = buildDummyWeekData(spot);
+      const tendency = spotRules[spot].tendency;
+
+      const today = week[0];
+      const tomorrow = week[1];
+
+      renderSummary(
+        document.getElementById("todayBox"),
+        "今日の総合判定",
+        today.result.score,
+        todayJudgeLabel(today.result.score + 7),
+        today.result,
+        tendency
+      );
+
+      renderSummary(
+        document.getElementById("tomorrowBox"),
+        "明日の前日予測",
+        tomorrow.result.score,
+        tomorrowJudgeLabel(tomorrow.result.score + 5),
+        tomorrow.result,
+        tendency
+      );
+
+      renderWeek(week);
+
+      document.getElementById("statusText").textContent =
+        `${spotRules[spot].name} のおすすめを更新しました。現在は判定アルゴリズムの土台表示です。`;
+    }
+
+    document.getElementById("refreshBtn").addEventListener("click", renderAll);
+    document.getElementById("spotSelect").addEventListener("change", renderAll);
+
+    renderAll();
+  </script>
 </body>
 </html>
