@@ -20,21 +20,40 @@
       --bad: #991b1b;
       --badbg: #fee2e2;
     }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
     }
+
     .wrap {
-      max-width: 820px;
+      max-width: 860px;
       margin: 0 auto;
       padding: 14px;
     }
-    h1 { margin: 0 0 6px; font-size: 24px; line-height: 1.2; }
-    h2 { margin: 0 0 12px; font-size: 18px; line-height: 1.3; }
-    .sub { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
     .panel {
       background: var(--card);
       border-radius: 16px;
@@ -43,6 +62,7 @@
       box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
       border: 1px solid rgba(15, 23, 42, 0.04);
     }
+
     .hero {
       background: linear-gradient(135deg, var(--primary), var(--primary2));
       color: #fff;
@@ -50,12 +70,14 @@
       top: 0;
       z-index: 10;
     }
+
     .score {
       font-size: 30px;
       font-weight: 800;
       margin: 6px 0 10px;
       letter-spacing: 1px;
     }
+
     .label {
       display: inline-block;
       padding: 5px 10px;
@@ -64,30 +86,47 @@
       font-weight: 700;
       margin-bottom: 10px;
     }
+
     .label.good { background: var(--okbg); color: var(--ok); }
     .label.mid { background: var(--midbg); color: var(--mid); }
     .label.bad { background: var(--badbg); color: var(--bad); }
     .hero .label { background: rgba(255,255,255,0.18); color: #fff; }
-    .meta { font-size: 14px; line-height: 1.7; }
-    .small { font-size: 12px; color: var(--muted); line-height: 1.6; }
-    .hero .small { color: rgba(255,255,255,0.82); }
+
+    .meta {
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .hero .small {
+      color: rgba(255,255,255,0.84);
+    }
+
     .row {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
       align-items: center;
     }
+
     select, input, textarea, button {
       font-size: 16px;
       padding: 10px 12px;
       border-radius: 10px;
     }
+
     select, input, textarea {
       border: 1px solid var(--line);
       background: #fff;
       color: var(--text);
       width: 100%;
     }
+
     button {
       border: none;
       background: var(--primary);
@@ -95,88 +134,12 @@
       cursor: pointer;
       font-weight: 700;
     }
+
     button.secondary {
       background: #e5e7eb;
       color: #111827;
     }
-    .status {
-      margin-top: 8px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-    .grid2 {
-      display: grid;
-      gap: 10px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .grid3 {
-      display: grid;
-      gap: 10px;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-    .stat {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 10px;
-      background: #fbfcfe;
-    }
-    .stat .k {
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-    .stat .v {
-      font-size: 15px;
-      font-weight: 700;
-    }
-    .week-grid {
-      display: grid;
-      gap: 10px;
-    }
-    .day-card {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 12px;
-      background: #fcfcfd;
-    }
-    .day-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
-    .day-date {
-      font-weight: 800;
-      font-size: 15px;
-    }
-    .day-stars {
-      font-weight: 800;
-      font-size: 20px;
-    }
-    .method {
-      margin-top: 6px;
-      font-size: 14px;
-      font-weight: 700;
-    }
-    .bullet { margin-top: 6px; font-size: 14px; line-height: 1.7; }
-    .log-item {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 10px;
-      background: #fbfcfe;
-      margin-bottom: 8px;
-    }
-    .log-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      font-size: 13px;
-      margin-bottom: 6px;
-    }
-    .log-title {
-      font-weight: 700;
-    }
+
     .danger {
       background: #b91c1c;
       color: #fff;
@@ -185,6 +148,120 @@
       padding: 6px 10px;
       font-size: 12px;
     }
+
+    .status {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .grid2 {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid3 {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fbfcfe;
+    }
+
+    .stat .k {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .stat .v {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .week-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .day-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fcfcfd;
+    }
+
+    .day-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .day-date {
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .day-stars {
+      font-weight: 800;
+      font-size: 20px;
+    }
+
+    .method {
+      margin-top: 6px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .bullet {
+      margin-top: 6px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .log-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fbfcfe;
+      margin-bottom: 8px;
+    }
+
+    .log-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 13px;
+      margin-bottom: 6px;
+      align-items: center;
+    }
+
+    .log-title {
+      font-weight: 700;
+    }
+
+    .ai-box {
+      border: 1px solid #c7d2fe;
+      background: #eef2ff;
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .ai-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #3730a3;
+      margin-bottom: 6px;
+    }
+
     @media (max-width: 700px) {
       .grid2, .grid3 { grid-template-columns: 1fr; }
       .score { font-size: 28px; }
@@ -194,7 +271,7 @@
 <body>
   <div class="wrap">
     <h1>星賀・船越 青物攻略チェックアプリ</h1>
-    <div class="sub">前日予測 / 当日判断 / 今日から1週間おすすめ / 実データ / 釣果ログ</div>
+    <div class="sub">前日予測 / 当日判断 / 今日から1週間おすすめ / 実データ / 釣果ログ / 簡易AI補正</div>
 
     <div class="panel hero">
       <h2>今日の結論</h2>
@@ -239,7 +316,15 @@
           <div class="v" id="liveMethod">未計算</div>
         </div>
       </div>
-      <div class="status" id="liveDataNote">潮は MSIL、風は Open-Meteo、釣果ログはブラウザ保存を使います。</div>
+      <div class="status" id="liveDataNote">潮は MSIL、風は Open-Meteo、水温は次段階、釣果ログはブラウザ保存です。</div>
+    </div>
+
+    <div class="panel">
+      <h2>簡易AI補正</h2>
+      <div class="ai-box">
+        <div class="ai-title">自分の過去釣果からの補正</div>
+        <div class="meta" id="aiSummary">まだ十分な学習データがありません。</div>
+      </div>
     </div>
 
     <div class="panel">
@@ -313,14 +398,13 @@
         <button id="clearLogBtn" class="secondary">全ログ削除</button>
       </div>
 
-      <div class="status">保存先はこのブラウザ内です。まずは自分用ログとして使います。</div>
-
+      <div class="status">保存先はこのブラウザ内です。まずは自分専用ログとして使います。</div>
       <div style="margin-top:12px;" id="logList"></div>
     </div>
   </div>
 
   <script>
-    const LOG_KEY = "seiga-funakoshi-log-v1";
+    const LOG_KEY = "seiga-funakoshi-log-v2";
 
     const spotRules = {
       seiga: {
@@ -339,6 +423,12 @@
         lon: 129.969,
         weights: { tide: 2, mazume: 2, wind: 3, temp: 2, bait: 2, surface: 2, method: 3 }
       }
+    };
+
+    const liveState = {
+      tideInfo: null,
+      windInfo: null,
+      tempInfo: null
     };
 
     function addDays(base, plus) {
@@ -435,10 +525,60 @@
       return 1;
     }
 
+    function getLogs() {
+      try {
+        return JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function setLogs(logs) {
+      localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+    }
+
+    function buildAiProfile(spot) {
+      const logs = getLogs().filter(l => l.spot === spot);
+      const successLogs = logs.filter(l => l.result === "釣れた" || l.result === "反応あり");
+
+      const methodScore = { "カゴ": 0, "餌": 0, "ルアー": 0, "泳がせ": 0 };
+      const timeScore = { "朝": 0, "昼": 0, "夕": 0, "夜": 0 };
+
+      successLogs.forEach(l => {
+        methodScore[l.method] = (methodScore[l.method] || 0) + (l.result === "釣れた" ? 2 : 1);
+        timeScore[l.timeBand] = (timeScore[l.timeBand] || 0) + (l.result === "釣れた" ? 2 : 1);
+      });
+
+      const bestMethod = Object.entries(methodScore).sort((a, b) => b[1] - a[1])[0];
+      const bestTime = Object.entries(timeScore).sort((a, b) => b[1] - a[1])[0];
+
+      return {
+        count: logs.length,
+        successCount: successLogs.length,
+        bestMethod: bestMethod && bestMethod[1] > 0 ? bestMethod[0] : null,
+        bestTime: bestTime && bestTime[1] > 0 ? bestTime[0] : null,
+        methodScore,
+        timeScore
+      };
+    }
+
+    function aiMethodBonus(method, ai) {
+      if (!ai.bestMethod) return 0;
+      if (method.includes(ai.bestMethod)) return 1;
+      return 0;
+    }
+
+    function aiTimeBonus(timeBandText, ai) {
+      if (!ai.bestTime) return 0;
+      if (timeBandText.includes(ai.bestTime)) return 1;
+      return 0;
+    }
+
     function calcWeightedDay(input, spot) {
       const w = spotRules[spot].weights;
+      const ai = buildAiProfile(spot);
 
-      const raw =
+      let raw =
         input.tide * w.tide +
         input.mazume * w.mazume +
         input.wind * w.wind +
@@ -447,6 +587,12 @@
         input.surface * w.surface +
         input.method * w.method;
 
+      const tempMethod = methodRecommend(input);
+      const tempTime = timeBand(input);
+
+      raw += aiMethodBonus(tempMethod, ai) * 6;
+      raw += aiTimeBonus(tempTime, ai) * 5;
+
       const score = normalizeWeightedScore(raw);
 
       return {
@@ -454,34 +600,31 @@
         score,
         stars: starText(score),
         band: bandLabel(score),
-        method: methodRecommend(input),
-        timeBand: timeBand(input),
-        comment: commentText(input, spot)
+        method: tempMethod,
+        timeBand: tempTime,
+        comment: commentText(input, spot),
+        ai
       };
     }
 
-    function buildDummyWeekData(spot) {
+    function buildDynamicWeekData(spot) {
       const base = new Date();
+      const windLevel = liveState.windInfo?.level ?? null;
+      const tideLevel = liveState.tideInfo?.level ?? null;
 
-      const patterns = spot === "seiga"
-        ? [
-            { tide: 3, mazume: 3, wind: 2, temp: 2, bait: 2, surface: 2, method: 2 },
-            { tide: 2, mazume: 2, wind: 1, temp: 2, bait: 2, surface: 1, method: 2 },
-            { tide: 1, mazume: 1, wind: 1, temp: 1, bait: 1, surface: 1, method: 1 },
-            { tide: 2, mazume: 1, wind: 2, temp: 2, bait: 1, surface: 1, method: 2 },
-            { tide: 3, mazume: 2, wind: 2, temp: 2, bait: 3, surface: 2, method: 3 },
-            { tide: 2, mazume: 2, wind: 2, temp: 1, bait: 2, surface: 2, method: 2 },
-            { tide: 1, mazume: 0, wind: 1, temp: 1, bait: 0, surface: 0, method: 1 }
-          ]
-        : [
-            { tide: 2, mazume: 2, wind: 3, temp: 2, bait: 2, surface: 1, method: 3 },
-            { tide: 2, mazume: 1, wind: 2, temp: 2, bait: 1, surface: 1, method: 2 },
-            { tide: 1, mazume: 1, wind: 1, temp: 1, bait: 1, surface: 1, method: 1 },
-            { tide: 2, mazume: 2, wind: 2, temp: 2, bait: 2, surface: 1, method: 3 },
-            { tide: 3, mazume: 2, wind: 2, temp: 2, bait: 2, surface: 2, method: 3 },
-            { tide: 2, mazume: 2, wind: 3, temp: 1, bait: 1, surface: 1, method: 2 },
-            { tide: 1, mazume: 0, wind: 1, temp: 1, bait: 0, surface: 0, method: 1 }
-          ];
+      const patterns = [];
+
+      for (let i = 0; i < 7; i++) {
+        const tide = i % 3 === 0 ? 3 : i % 2 === 0 ? 1 : 2;
+        const mazume = i % 4 === 0 ? 3 : i % 3 === 0 ? 2 : 1;
+        const wind = windLevel != null ? windLevel : (spot === "funakoshi" ? 2 : 1);
+        const temp = 1;
+        const bait = spot === "seiga" ? (i % 2 === 0 ? 2 : 1) : (i % 3 === 0 ? 2 : 1);
+        const surface = tideLevel != null ? Math.max(0, tideLevel - 1) : (i % 2 === 0 ? 2 : 1);
+        const method = i % 4 === 0 ? 3 : 2;
+
+        patterns.push({ tide, mazume, wind, temp, bait, surface, method });
+      }
 
       return patterns.map((p, i) => ({
         date: addDays(base, i),
@@ -533,9 +676,26 @@
       document.getElementById("heroNote").textContent = `${spotRules[spot].name} / ${spotRules[spot].tendency}`;
     }
 
+    function renderAiSummary(spot) {
+      const ai = buildAiProfile(spot);
+      const box = document.getElementById("aiSummary");
+
+      if (ai.count === 0) {
+        box.textContent = "まだ十分な学習データがありません。釣果ログを保存すると補正がかかります。";
+        return;
+      }
+
+      box.innerHTML = `
+        ログ件数：${ai.count}件 / 反応あり以上：${ai.successCount}件<br>
+        得意時間帯：${ai.bestTime || "未判定"}<br>
+        得意釣法：${ai.bestMethod || "未判定"}<br>
+        その条件に合う日は、週間おすすめに少し加点します。
+      `;
+    }
+
     function renderAll() {
       const spot = document.getElementById("spotSelect").value;
-      const week = buildDummyWeekData(spot);
+      const week = buildDynamicWeekData(spot);
       const tendency = spotRules[spot].tendency;
 
       const today = week[0];
@@ -560,12 +720,31 @@
       );
 
       renderWeek(week);
+      renderAiSummary(spot);
 
       document.getElementById("statusText").textContent =
-        `${spotRules[spot].name} のおすすめを更新しました。現在は判定アルゴリズム + API接続の段階です。`;
-      document.getElementById("liveTide").textContent = `${spotRules[spot].tideStation} / 未取得`;
+        `${spotRules[spot].name} のおすすめを更新しました。風APIと釣果AI補正を反映しています。`;
+      document.getElementById("liveTide").textContent =
+        liveState.tideInfo?.text || `${spotRules[spot].tideStation} / 未取得`;
+      document.getElementById("liveWind").textContent =
+        liveState.windInfo?.text || "未取得";
+      document.getElementById("liveTemp").textContent =
+        liveState.tempInfo?.text || "未取得";
       document.getElementById("liveMethod").textContent = today.result.method;
       document.getElementById("logSpot").value = spot;
+    }
+
+    function directionLabel(deg) {
+      if (deg == null || Number.isNaN(Number(deg))) return "-";
+      const d = Number(deg);
+      if (d >= 337.5 || d < 22.5) return "北";
+      if (d < 67.5) return "北東";
+      if (d < 112.5) return "東";
+      if (d < 157.5) return "南東";
+      if (d < 202.5) return "南";
+      if (d < 247.5) return "南西";
+      if (d < 292.5) return "西";
+      return "北西";
     }
 
     function parseMsilTide(raw) {
@@ -588,21 +767,23 @@
       const abs = Math.abs(diff);
 
       let tideText = "潮弱い";
-      if (abs >= 50) tideText = "潮かなり動く";
-      else if (abs >= 25) tideText = "潮が動く";
-      else if (abs >= 10) tideText = "潮まずまず";
+      let level = 0;
+      if (abs >= 50) { tideText = "潮かなり動く"; level = 3; }
+      else if (abs >= 25) { tideText = "潮が動く"; level = 2; }
+      else if (abs >= 10) { tideText = "潮まずまず"; level = 1; }
 
       return {
         stationCode: raw.stationCode,
         diff: Math.round(abs),
         direction: diff > 0 ? "上げ" : diff < 0 ? "下げ" : "停滞",
-        tideText
+        tideText,
+        level,
+        text: `${raw.stationCode} / ${tideText} / ${diff > 0 ? "上げ" : diff < 0 ? "下げ" : "停滞"} / 2時間差 ${Math.round(abs)}cm`
       };
     }
 
     async function fetchTideData(spot) {
-      const url = `/api/msil-tide?spot=${encodeURIComponent(spot)}`;
-      const res = await fetch(url);
+      const res = await fetch(`/api/msil-tide?spot=${encodeURIComponent(spot)}`);
       if (!res.ok) {
         const txt = await res.text();
         throw new Error(`潮取得失敗: ${txt.slice(0, 120)}`);
@@ -617,23 +798,21 @@
       if (!res.ok) throw new Error("風取得失敗");
       const json = await res.json();
       const current = json.current || {};
-      return {
-        speed: current.wind_speed_10m,
-        dir: current.wind_direction_10m
-      };
-    }
+      const speed = current.wind_speed_10m;
+      const dir = current.wind_direction_10m;
 
-    function directionLabel(deg) {
-      if (deg == null || Number.isNaN(Number(deg))) return "-";
-      const d = Number(deg);
-      if (d >= 337.5 || d < 22.5) return "北";
-      if (d < 67.5) return "北東";
-      if (d < 112.5) return "東";
-      if (d < 157.5) return "南東";
-      if (d < 202.5) return "南";
-      if (d < 247.5) return "南西";
-      if (d < 292.5) return "西";
-      return "北西";
+      let level = 1;
+      if (speed <= 3) level = 3;
+      else if (speed <= 6) level = 2;
+      else if (speed <= 9) level = 1;
+      else level = 0;
+
+      return {
+        speed,
+        dir,
+        level,
+        text: `${directionLabel(dir)} ${speed ?? "-"} m/s`
+      };
     }
 
     async function fetchLiveData() {
@@ -646,38 +825,19 @@
           fetchWindData(spot)
         ]);
 
-        const tideInfo = parseMsilTide(tideRaw);
+        liveState.tideInfo = parseMsilTide(tideRaw);
+        liveState.windInfo = windRaw;
+        liveState.tempInfo = { text: "次段階で接続" };
 
-        if (tideInfo) {
-          document.getElementById("liveTide").textContent =
-            `${spotRules[spot].tideStation} / ${tideInfo.tideText} / ${tideInfo.direction} / 2時間差 ${tideInfo.diff}cm`;
-        } else {
-          document.getElementById("liveTide").textContent = `${spotRules[spot].tideStation} / 判定不能`;
-        }
-
-        document.getElementById("liveWind").textContent =
-          `${directionLabel(windRaw.dir)} ${windRaw.speed ?? "-"} m/s`;
-
-        document.getElementById("liveTemp").textContent = "次段階で接続";
         document.getElementById("liveDataNote").textContent =
           "潮は MSIL、風は Open-Meteo から取得しました。水温は次段階で接続します。";
         document.getElementById("statusText").textContent = "実データを更新しました。";
+
+        renderAll();
       } catch (err) {
         document.getElementById("statusText").textContent = "実データ更新でエラーが出ました。";
         document.getElementById("liveDataNote").textContent = String(err);
       }
-    }
-
-    function getLogs() {
-      try {
-        return JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
-      } catch {
-        return [];
-      }
-    }
-
-    function setLogs(logs) {
-      localStorage.setItem(LOG_KEY, JSON.stringify(logs));
     }
 
     function renderLogs() {
@@ -719,13 +879,20 @@
       logs.push(log);
       setLogs(logs);
       renderLogs();
+      renderAiSummary(document.getElementById("spotSelect").value);
+      renderAll();
+
       document.getElementById("statusText").textContent = "釣果ログを保存しました。";
+      document.getElementById("logFish").value = "";
+      document.getElementById("logMemo").value = "";
     }
 
     function clearLogs() {
       if (!confirm("全ログを削除しますか？")) return;
       localStorage.removeItem(LOG_KEY);
       renderLogs();
+      renderAiSummary(document.getElementById("spotSelect").value);
+      renderAll();
       document.getElementById("statusText").textContent = "全ログを削除しました。";
     }
 
@@ -734,6 +901,8 @@
       logs.splice(index, 1);
       setLogs(logs);
       renderLogs();
+      renderAiSummary(document.getElementById("spotSelect").value);
+      renderAll();
       document.getElementById("statusText").textContent = "ログを削除しました。";
     }
 
