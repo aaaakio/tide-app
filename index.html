@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>星賀・船越 青物攻略チェックアプリ Ver.2.4.1</title>
+<title>星賀・船越 青物攻略チェックアプリ Ver.3.0</title>
 <style>
   :root{
     --bg:#eef3f8;
@@ -21,6 +21,8 @@
     --badbg:#fee2e2;
     --info:#1d4ed8;
     --infobg:#dbeafe;
+    --rank1:#7c3aed;
+    --rank1bg:#ede9fe;
   }
 
   *{box-sizing:border-box}
@@ -86,6 +88,7 @@
   .label.mid{background:var(--midbg);color:var(--mid)}
   .label.bad{background:var(--badbg);color:var(--bad)}
   .label.info{background:var(--infobg);color:var(--info)}
+  .label.rank-top{background:var(--rank1bg);color:var(--rank1)}
   .hero .label{background:rgba(255,255,255,0.18);color:#fff}
   .meta{
     font-size:14px;
@@ -187,7 +190,8 @@
   }
   .day-stars{
     font-weight:800;
-    font-size:20px;
+    font-size:22px;
+    letter-spacing:1px;
   }
   .method{
     margin-top:6px;
@@ -280,6 +284,24 @@
     font-weight:800;
     line-height:1.5;
   }
+  .fishing-score-box{
+    margin-top:8px;
+    padding:10px;
+    border:1px solid #dbeafe;
+    border-radius:12px;
+    background:#f8fbff;
+  }
+  .fishing-score-title{
+    font-size:12px;
+    font-weight:800;
+    color:#1d4ed8;
+    margin-bottom:4px;
+  }
+  .fishing-score-line{
+    font-size:14px;
+    font-weight:700;
+    line-height:1.6;
+  }
   @media (max-width:700px){
     .grid2,.grid3,.tri-grid{grid-template-columns:1fr}
     .score{font-size:28px}
@@ -288,8 +310,8 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>星賀・船越 青物攻略チェックアプリ Ver.2.4.1</h1>
-  <div class="sub">前日予測 / 当日判断 / 1週間おすすめ / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正</div>
+  <h1>星賀・船越 青物攻略チェックアプリ Ver.3.0</h1>
+  <div class="sub">前日予測 / 当日判断 / 1週間おすすめ / 釣れそう度スコア / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正</div>
 
   <div class="panel hero">
     <h2>今日の結論</h2>
@@ -1114,6 +1136,146 @@
     `;
   }
 
+  function getFirstHighTideHour(highs) {
+    if (!Array.isArray(highs) || highs.length === 0) return null;
+    const first = highs[0]?.time;
+    if (!first || !first.includes(":")) return null;
+    const hour = parseInt(first.split(":")[0], 10);
+    return Number.isFinite(hour) ? hour : null;
+  }
+
+  function getTideNameScoreV3(tideName) {
+    const map = {
+      "大潮": 15,
+      "中潮": 13,
+      "小潮": 8,
+      "長潮": 5,
+      "若潮": 6,
+      "平潮": 7
+    };
+    return map[tideName] ?? 7;
+  }
+
+  function getTideRangeScoreV3(todayRange, minRange, maxRange) {
+    if (!Number.isFinite(todayRange)) return 10;
+    if (!Number.isFinite(minRange) || !Number.isFinite(maxRange) || maxRange === minRange) return 10;
+    const raw = ((todayRange - minRange) / (maxRange - minRange)) * 20;
+    return Math.max(0, Math.min(20, Math.round(raw)));
+  }
+
+  function getHighTideTimeScoreV3(highs) {
+    const hour = getFirstHighTideHour(highs);
+    if (hour == null) return 7;
+
+    if (hour >= 5 && hour <= 9) return 15;
+    if (hour >= 16 && hour <= 19) return 13;
+    if (hour >= 10 && hour <= 15) return 8;
+    if (hour >= 20 && hour <= 23) return 6;
+    if (hour >= 0 && hour <= 4) return 5;
+    return 7;
+  }
+
+  function getWindDirScoreV3(spot, windDir) {
+    const rules = {
+      hoshiga: {
+        good: ["N", "NNE", "NE", "NNW", "NW"],
+        fair: ["ENE", "WNW", "W", "E"],
+        bad: ["ESE", "SE", "SSE", "S", "SSW", "SW", "WSW"]
+      },
+      funakoshi: {
+        good: ["N", "NNE", "NE", "NNW"],
+        fair: ["ENE", "E", "NW", "WNW", "W"],
+        bad: ["ESE", "SE", "SSE", "S", "SSW", "SW", "WSW"]
+      }
+    };
+
+    const set = rules[spot];
+    if (!set || !windDir) return 8;
+    if (set.good.includes(windDir)) return 15;
+    if (set.fair.includes(windDir)) return 10;
+    if (set.bad.includes(windDir)) return 4;
+    return 8;
+  }
+
+  function getWindSpeedScoreV3(windSpeed) {
+    if (!Number.isFinite(windSpeed)) return 7;
+    if (windSpeed <= 2) return 8;
+    if (windSpeed <= 5) return 15;
+    if (windSpeed <= 7) return 10;
+    if (windSpeed <= 9) return 5;
+    return 0;
+  }
+
+  function getWeatherScoreV3(weatherText) {
+    if (!weatherText) return 5;
+    if (weatherText.includes("曇") || weatherText.includes("くもり")) return 10;
+    if (weatherText.includes("晴")) return 8;
+    if (weatherText.includes("小雨") || weatherText.includes("にわか雨")) return 7;
+    if (weatherText.includes("雨") || weatherText.includes("雪") || weatherText.includes("みぞれ")) return 4;
+    if (weatherText.includes("雷")) return 0;
+    return 5;
+  }
+
+  function getWaterTempScoreV3(temp) {
+    if (!Number.isFinite(temp)) return 5;
+    if (temp >= 14 && temp <= 24) return 10;
+    if ((temp >= 12 && temp < 14) || (temp > 24 && temp <= 26)) return 7;
+    if ((temp >= 10 && temp < 12) || (temp > 26 && temp <= 28)) return 4;
+    return 1;
+  }
+
+  function score100ToStarText(score) {
+    if (score >= 85) return "★★★★★";
+    if (score >= 70) return "★★★★☆";
+    if (score >= 55) return "★★★☆☆";
+    if (score >= 40) return "★★☆☆☆";
+    return "★☆☆☆☆";
+  }
+
+  function score100ToRankText(score) {
+    if (score >= 85) return "本命日";
+    if (score >= 70) return "候補日";
+    if (score >= 55) return "狙い目あり";
+    if (score >= 40) return "様子見";
+    return "見送り";
+  }
+
+  function score100ToRankClass(score) {
+    if (score >= 85) return "rank-top";
+    if (score >= 70) return "good";
+    if (score >= 55) return "info";
+    if (score >= 40) return "mid";
+    return "bad";
+  }
+
+  function calculateFishingScoreV3({ spot, tideDay, weather, waterTemp, minRange, maxRange }) {
+    const tideNameScore = getTideNameScoreV3(tideDay?.tideName);
+    const tideRangeScore = getTideRangeScoreV3(tideDay?.range, minRange, maxRange);
+    const highTideTimeScore = getHighTideTimeScoreV3(tideDay?.highs || []);
+    const windDirScore = getWindDirScoreV3(spot, weather?.dir16);
+    const windSpeedScore = getWindSpeedScoreV3(weather?.windSpeed);
+    const weatherScore = getWeatherScoreV3(weather?.text);
+    const waterTempScore = getWaterTempScoreV3(waterTemp);
+
+    const totalScore = tideNameScore + tideRangeScore + highTideTimeScore + windDirScore + windSpeedScore + weatherScore + waterTempScore;
+
+    return {
+      totalScore,
+      stars: score100ToStarText(totalScore),
+      rank: score100ToRankText(totalScore),
+      rankClass: score100ToRankClass(totalScore),
+      details: {
+        tideNameScore,
+        tideRangeScore,
+        highTideTimeScore,
+        windDirScore,
+        windSpeedScore,
+        weatherScore,
+        waterTempScore
+      }
+    };
+  }
+
   function renderWeek(weekList) {
     const spot = document.getElementById("spotSelect").value;
     const box = document.getElementById("weekBox");
@@ -1132,9 +1294,16 @@
         <div class="day-card">
           <div class="day-top">
             <div class="day-date">${fmtDate(day.date)}</div>
-            <div class="day-stars">${day.result.overall.starText}</div>
+            <div class="day-stars">${day.fishing.stars}</div>
           </div>
+          <span class="label ${day.fishing.rankClass}">${day.fishing.rank}</span>
           <div>${renderLabel(labelObj)}</div>
+
+          <div class="fishing-score-box">
+            <div class="fishing-score-title">Ver.3 釣れそう度</div>
+            <div class="fishing-score-line">${day.fishing.stars} / ${day.fishing.rank} / ${day.fishing.totalScore}点</div>
+          </div>
+
           <div class="bullet">おすすめ：${day.result.flowMethod}</div>
           <div class="bullet">天気・風・気温：${weatherWindTempText}</div>
           <div class="bullet">通常カゴ ${day.result.normalKago.label} / 遠投ロケットカゴ ${day.result.rocketKago.label} / 泳がせ ${day.result.liveBait.label}</div>
@@ -1212,6 +1381,13 @@
       rangeAirTempText(liveState.weatherWeek[1]?.tempMax, liveState.weatherWeek[1]?.tempMin)
     );
 
+    const tideRanges = liveState.tideWeek
+      .map(d => d?.range)
+      .filter(v => Number.isFinite(v));
+
+    const minRange = tideRanges.length ? Math.min(...tideRanges) : 0;
+    const maxRange = tideRanges.length ? Math.max(...tideRanges) : 0;
+
     const weekList = liveState.tideWeek.length > 0
       ? liveState.tideWeek.map((tideDay, i) => {
           const w = liveState.weatherWeek[i] || null;
@@ -1222,11 +1398,22 @@
             w?.windSpeed ?? windSpeed,
             i % 2 === 0 ? "朝" : "夕"
           );
+
+          const fishing = calculateFishingScoreV3({
+            spot,
+            tideDay,
+            weather: w,
+            waterTemp: liveState.tempCurrent?.value,
+            minRange,
+            maxRange
+          });
+
           return {
             date: addDays(new Date(), i),
             tideDay,
             weather: w,
-            result
+            result,
+            fishing
           };
         })
       : Array.from({ length: 7 }).map((_, i) => {
@@ -1246,11 +1433,22 @@
             w?.windSpeed ?? windSpeed,
             i % 2 === 0 ? "朝" : "夕"
           );
+
+          const fishing = calculateFishingScoreV3({
+            spot,
+            tideDay: dummyTide,
+            weather: w,
+            waterTemp: liveState.tempCurrent?.value,
+            minRange: 60,
+            maxRange: 100
+          });
+
           return {
             date: addDays(new Date(), i),
             tideDay: dummyTide,
             weather: w,
-            result
+            result,
+            fishing
           };
         });
 
@@ -1263,7 +1461,7 @@
     renderFishSpecies(spot, todayResult, liveState.tideToday);
 
     document.getElementById("statusText").textContent =
-      `${spotRules[spot].name} のおすすめを更新しました。風向・風速・天気・気温・潮位差・潮名・JMA満潮干潮・3系統判定・期待魚種・AI補正を反映しています。`;
+      `${spotRules[spot].name} のおすすめを更新しました。Ver.3 の釣れそう度スコアを週間カードに追加しています。`;
 
     document.getElementById("liveTide").textContent =
       liveState.tideToday
