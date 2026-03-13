@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>星賀・船越 青物攻略チェックアプリ Ver.2.4</title>
+<title>星賀・船越 青物攻略チェックアプリ Ver.2.4.1</title>
 <style>
   :root{
     --bg:#eef3f8;
@@ -288,8 +288,8 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>星賀・船越 青物攻略チェックアプリ Ver.2.4</h1>
-  <div class="sub">前日予測 / 当日判断 / 1週間おすすめ / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正</div>
+  <h1>星賀・船越 青物攻略チェックアプリ Ver.2.4.1</h1>
+  <div class="sub">前日予測 / 当日判断 / 1週間おすすめ / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正</div>
 
   <div class="panel hero">
     <h2>今日の結論</h2>
@@ -333,7 +333,7 @@
         <div class="v" id="liveMethod">未計算</div>
       </div>
     </div>
-    <div class="status" id="liveDataNote">潮差は MSIL、満潮干潮は JMA、天気・風は Open-Meteo Weather、水温は Open-Meteo Marine から取得します。</div>
+    <div class="status" id="liveDataNote">潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得します。</div>
   </div>
 
   <div class="panel">
@@ -454,7 +454,7 @@
 </div>
 
 <script>
-  const LOG_KEY = "seiga-funakoshi-log-v24";
+  const LOG_KEY = "seiga-funakoshi-log-v241";
 
   const spotRules = {
     hoshiga: {
@@ -581,7 +581,8 @@
     windCurrent: null,
     tempCurrent: null,
     weatherCurrent: null,
-    weatherWeek: []
+    weatherWeek: [],
+    airTempCurrent: null
   };
 
   function addDays(base, plus) {
@@ -636,6 +637,11 @@
     const dir16 = windObj?.dir16 || "N";
     const speed = typeof windObj?.speed === "number" ? `${windObj.speed.toFixed(1)}m/s` : "--.-m/s";
     return `${weatherText} / ${dir16} ${speed}`;
+  }
+
+  function makeWeatherWindTempText(weatherObj, windObj, tempText) {
+    const base = makeWeatherWindText(weatherObj, windObj);
+    return `${base} / ${tempText || "--℃"}`;
   }
 
   function scoreToMethodLabel(score) {
@@ -776,7 +782,7 @@
     return "様子見";
   }
 
-  function evaluateFishingConditionV24({ place, windDir16, windSpeed, tideRangeCm, ai = null, timeBand = "朝" }) {
+  function evaluateFishingConditionV241({ place, windDir16, windSpeed, tideRangeCm, ai = null, timeBand = "朝" }) {
     const safePlace = (place === "hoshiga" || place === "funakoshi") ? place : "hoshiga";
     const safeDir = DIRECTIONS_16.includes(windDir16) ? windDir16 : "N";
     const windBase = WIND_TABLE[safePlace][safeDir];
@@ -940,12 +946,12 @@
     const info = spotRules[spot];
     const url =
       `https://api.open-meteo.com/v1/forecast?latitude=${info.lat}&longitude=${info.lon}` +
-      `&current=weather_code,wind_speed_10m,wind_direction_10m` +
-      `&daily=weather_code,wind_speed_10m_max,wind_direction_10m_dominant` +
+      `&current=weather_code,wind_speed_10m,wind_direction_10m,temperature_2m` +
+      `&daily=weather_code,wind_speed_10m_max,wind_direction_10m_dominant,temperature_2m_max,temperature_2m_min` +
       `&wind_speed_unit=ms` +
       `&timezone=Asia%2FTokyo&forecast_days=8`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error("天気・風取得失敗");
+    if (!res.ok) throw new Error("天気・風・気温取得失敗");
     return await res.json();
   }
 
@@ -975,14 +981,29 @@
     const codes = daily.weather_code || [];
     const maxSpeeds = daily.wind_speed_10m_max || [];
     const dominantDirs = daily.wind_direction_10m_dominant || [];
+    const tempMax = daily.temperature_2m_max || [];
+    const tempMin = daily.temperature_2m_min || [];
 
     return codes.map((code, i) => ({
       text: weatherCodeToText(code),
       code: Number(code),
       windSpeed: Number(maxSpeeds[i] || 0),
       windDeg: Number(dominantDirs[i] || 0),
-      dir16: degTo16Dir(dominantDirs[i])
+      dir16: degTo16Dir(dominantDirs[i]),
+      tempMax: Number.isFinite(Number(tempMax[i])) ? Number(tempMax[i]) : null,
+      tempMin: Number.isFinite(Number(tempMin[i])) ? Number(tempMin[i]) : null
     }));
+  }
+
+  function currentAirTempText(temp) {
+    return typeof temp === "number" ? `${temp.toFixed(1)}℃` : "--℃";
+  }
+
+  function rangeAirTempText(max, min) {
+    if (typeof max === "number" && typeof min === "number") return `${Math.round(max)}℃-${Math.round(min)}℃`;
+    if (typeof max === "number") return `${Math.round(max)}℃`;
+    if (typeof min === "number") return `${Math.round(min)}℃`;
+    return "--℃";
   }
 
   function scoreFishSpecies(spot, evalResult, tideDay, ai) {
@@ -1068,7 +1089,7 @@
     return `<span class="label ${obj.cls}">${obj.text}</span>`;
   }
 
-  function renderSummary(boxId, title, result, tideDay, weatherWindText, dayType = "today") {
+  function renderSummary(boxId, title, result, tideDay, weatherWindTempText, dayType = "today") {
     const box = document.getElementById(boxId);
     const tideExtra = tideDay
       ? `${tideDay.tideName} / 潮差 ${tideDay.range}cm / 満潮 ${fmtJmaEvents(tideDay.highs)} / 干潮 ${fmtJmaEvents(tideDay.lows)}`
@@ -1085,10 +1106,10 @@
         <div class="bullet">通常カゴ：${result.normalKago.label}</div>
         <div class="bullet">遠投ロケットカゴ：${result.rocketKago.label}</div>
         <div class="bullet">泳がせ：${result.liveBait.label}</div>
-        <div class="bullet">天気・風：${weatherWindText}</div>
+        <div class="bullet">天気・風・気温：${weatherWindTempText}</div>
         <div class="bullet">コメント：${result.comments.join("。")}</div>
         <div class="bullet">潮詳細：${tideExtra}</div>
-        <div class="small" style="margin-top:8px;">${dayType === "today" ? "当日判断" : "前日予測"}は、風向・風速・潮位差・潮名・JMA満潮干潮・天気を反映しています。</div>
+        <div class="small" style="margin-top:8px;">${dayType === "today" ? "当日判断" : "前日予測"}は、風向・風速・潮位差・潮名・JMA満潮干潮・天気・気温を反映しています。</div>
       </div>
     `;
   }
@@ -1101,10 +1122,11 @@
     box.innerHTML = weekList.map(day => {
       const fish = scoreFishSpecies(spot, day.result, day.tideDay, ai);
       const labelObj = scoreToOverallLabel(day.result.overall.score);
-      const weatherWindText = makeWeatherWindText(day.weather, {
-        dir16: day.weather?.dir16,
-        speed: day.weather?.windSpeed
-      });
+      const weatherWindTempText = makeWeatherWindTempText(
+        day.weather,
+        { dir16: day.weather?.dir16, speed: day.weather?.windSpeed },
+        rangeAirTempText(day.weather?.tempMax, day.weather?.tempMin)
+      );
 
       return `
         <div class="day-card">
@@ -1114,7 +1136,7 @@
           </div>
           <div>${renderLabel(labelObj)}</div>
           <div class="bullet">おすすめ：${day.result.flowMethod}</div>
-          <div class="bullet">天気・風：${weatherWindText}</div>
+          <div class="bullet">天気・風・気温：${weatherWindTempText}</div>
           <div class="bullet">通常カゴ ${day.result.normalKago.label} / 遠投ロケットカゴ ${day.result.rocketKago.label} / 泳がせ ${day.result.liveBait.label}</div>
           <div class="bullet">潮：${day.tideDay ? day.tideDay.tideName : "-"} / 潮差 ${day.tideDay ? day.tideDay.range : "-"}cm</div>
           <div class="bullet">満潮 ${day.tideDay ? fmtJmaEvents(day.tideDay.highs) : "--:--"}</div>
@@ -1160,7 +1182,7 @@
     const dir16 = degTo16Dir(windDeg);
     const tideRangeCm = tideDay?.range ?? 80;
 
-    return evaluateFishingConditionV24({
+    return evaluateFishingConditionV241({
       place: spot,
       windDir16: dir16,
       windSpeed: Number(windSpeed) || 4,
@@ -1178,13 +1200,16 @@
     const todayResult = buildCurrentResult(spot, liveState.tideToday, windDeg, windSpeed, "朝");
     const tomorrowResult = buildCurrentResult(spot, liveState.tideTomorrow || liveState.tideToday, windDeg, windSpeed, "朝");
 
-    const todayWeatherWindText = makeWeatherWindText(liveState.weatherCurrent, liveState.windCurrent);
-    const tomorrowWeatherWindText = makeWeatherWindText(
+    const todayWeatherWindTempText = makeWeatherWindTempText(
+      liveState.weatherCurrent,
+      liveState.windCurrent,
+      currentAirTempText(liveState.airTempCurrent)
+    );
+
+    const tomorrowWeatherWindTempText = makeWeatherWindTempText(
       liveState.weatherWeek[1],
-      {
-        dir16: liveState.weatherWeek[1]?.dir16,
-        speed: liveState.weatherWeek[1]?.windSpeed
-      }
+      { dir16: liveState.weatherWeek[1]?.dir16, speed: liveState.weatherWeek[1]?.windSpeed },
+      rangeAirTempText(liveState.weatherWeek[1]?.tempMax, liveState.weatherWeek[1]?.tempMin)
     );
 
     const weekList = liveState.tideWeek.length > 0
@@ -1231,14 +1256,14 @@
 
     renderHero(todayResult, spot);
     renderMethod3(todayResult);
-    renderSummary("todayBox", "今日の総合判定", todayResult, liveState.tideToday, todayWeatherWindText, "today");
-    renderSummary("tomorrowBox", "明日の前日予測", tomorrowResult, liveState.tideTomorrow, tomorrowWeatherWindText, "tomorrow");
+    renderSummary("todayBox", "今日の総合判定", todayResult, liveState.tideToday, todayWeatherWindTempText, "today");
+    renderSummary("tomorrowBox", "明日の前日予測", tomorrowResult, liveState.tideTomorrow, tomorrowWeatherWindTempText, "tomorrow");
     renderWeek(weekList);
     renderAiSummary(spot);
     renderFishSpecies(spot, todayResult, liveState.tideToday);
 
     document.getElementById("statusText").textContent =
-      `${spotRules[spot].name} のおすすめを更新しました。風向・風速・天気・潮位差・潮名・JMA満潮干潮・3系統判定・期待魚種・AI補正を反映しています。`;
+      `${spotRules[spot].name} のおすすめを更新しました。風向・風速・天気・気温・潮位差・潮名・JMA満潮干潮・3系統判定・期待魚種・AI補正を反映しています。`;
 
     document.getElementById("liveTide").textContent =
       liveState.tideToday
@@ -1247,7 +1272,7 @@
 
     document.getElementById("liveWind").textContent =
       liveState.windCurrent
-        ? `${liveState.windCurrent.dir16} / ${liveState.windCurrent.speed.toFixed(1)}m/s\n${liveState.weatherCurrent?.text || ""}`
+        ? `${liveState.windCurrent.dir16} / ${liveState.windCurrent.speed.toFixed(1)}m/s\n${liveState.weatherCurrent?.text || ""} / 気温 ${currentAirTempText(liveState.airTempCurrent)}`
         : "未取得";
 
     document.getElementById("liveTemp").textContent =
@@ -1349,11 +1374,15 @@
         text: weatherCodeToText(weatherCurrent.weather_code)
       };
 
+      liveState.airTempCurrent = Number.isFinite(Number(weatherCurrent.temperature_2m))
+        ? Number(weatherCurrent.temperature_2m)
+        : null;
+
       liveState.weatherWeek = buildWeatherWeek(weatherJson);
       liveState.tempCurrent = tempDisplayFromMarine(marineJson);
 
       document.getElementById("liveDataNote").textContent =
-        "潮差は MSIL、満潮干潮は JMA、天気・風は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。";
+        "潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。";
       document.getElementById("statusText").textContent = "実データを更新しました。";
 
       renderAll();
