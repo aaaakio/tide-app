@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>星賀・船越 青物攻略チェックアプリ Ver.3.0.1</title>
+<title>星賀・船越 青物攻略チェックアプリ</title>
 <style>
   :root{
     --bg:#eef3f8;
@@ -310,8 +310,8 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>星賀・船越 青物攻略チェックアプリ Ver.3.0.1</h1>
-  <div class="sub">前日予測 / 当日判断 / 1週間おすすめ / 釣れそう度スコア / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 水温昨日比 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正</div>
+  <h1 id="appTitle">星賀・船越 青物攻略チェックアプリ</h1>
+  <div class="sub" id="appSub">前日予測 / 当日判断 / 1週間おすすめ / 釣れそう度スコア / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 水温昨日比 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正</div>
 
   <div class="panel hero">
     <h2>今日の結論</h2>
@@ -476,6 +476,7 @@
 </div>
 
 <script>
+  const APP_VERSION = "3.1";
   const LOG_KEY = "seiga-funakoshi-log-v241";
   const WATER_TEMP_HISTORY_KEY = "seiga-funakoshi-water-temp-history-v300";
 
@@ -608,6 +609,13 @@
     weatherWeek: [],
     airTempCurrent: null
   };
+
+  function initVersionTexts() {
+    document.title = `星賀・船越 青物攻略チェックアプリ Ver.${APP_VERSION}`;
+    document.getElementById("appTitle").textContent = `星賀・船越 青物攻略チェックアプリ Ver.${APP_VERSION}`;
+    document.getElementById("appSub").textContent =
+      `Ver.${APP_VERSION} / 前日予測 / 当日判断 / 1週間おすすめ / 釣れそう度スコア / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 水温昨日比 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正`;
+  }
 
   function addDays(base, plus) {
     const d = new Date(base);
@@ -1285,6 +1293,13 @@
     return 1;
   }
 
+  function applyWindLimitV31(score, windSpeed) {
+    if (!Number.isFinite(windSpeed)) return score;
+    if (windSpeed >= 10) return Math.min(score, 54);
+    if (windSpeed >= 8) return Math.min(score, 69);
+    return score;
+  }
+
   function score100ToStarText(score) {
     if (score >= 85) return "★★★★★";
     if (score >= 70) return "★★★★☆";
@@ -1318,7 +1333,17 @@
     const weatherScore = getWeatherScoreV3(weather?.text);
     const waterTempScore = getWaterTempScoreV3(waterTemp);
 
-    const totalScore = tideNameScore + tideRangeScore + highTideTimeScore + windDirScore + windSpeedScore + weatherScore + waterTempScore;
+    const baseScore =
+      tideNameScore +
+      tideRangeScore +
+      highTideTimeScore +
+      windDirScore +
+      windSpeedScore +
+      weatherScore +
+      waterTempScore;
+
+    const limitedScore = applyWindLimitV31(baseScore, weather?.windSpeed);
+    const totalScore = Math.max(0, Math.min(100, limitedScore));
 
     return {
       totalScore,
@@ -1344,7 +1369,6 @@
 
     box.innerHTML = weekList.map(day => {
       const fish = scoreFishSpecies(spot, day.result, day.tideDay, ai);
-      const labelObj = scoreToOverallLabel(day.result.overall.score);
       const weatherWindTempText = makeWeatherWindTempText(
         day.weather,
         { dir16: day.weather?.dir16, speed: day.weather?.windSpeed },
@@ -1357,11 +1381,11 @@
             <div class="day-date">${fmtDate(day.date)}</div>
             <div class="day-stars">${day.fishing.stars}</div>
           </div>
+
           <span class="label ${day.fishing.rankClass}">${day.fishing.rank}</span>
-          <div>${renderLabel(labelObj)}</div>
 
           <div class="fishing-score-box">
-            <div class="fishing-score-title">Ver.3.0.1 釣れそう度</div>
+            <div class="fishing-score-title">Ver.${APP_VERSION} 釣れそう度</div>
             <div class="fishing-score-line">${day.fishing.stars} / ${day.fishing.rank} / ${day.fishing.totalScore}点</div>
           </div>
 
@@ -1522,7 +1546,7 @@
     renderFishSpecies(spot, todayResult, liveState.tideToday);
 
     document.getElementById("statusText").textContent =
-      `${spotRules[spot].name} のおすすめを更新しました。Ver.3 の釣れそう度スコアを週間カードに追加しています。`;
+      `${spotRules[spot].name} のおすすめを更新しました。Ver.${APP_VERSION} の釣れそう度スコアを週間カードに表示しています。`;
 
     document.getElementById("liveTide").textContent =
       liveState.tideToday
@@ -1646,7 +1670,7 @@
       saveCurrentWaterTempForToday(spot, liveState.tempCurrent?.value);
 
       document.getElementById("liveDataNote").textContent =
-        "潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。水温欄には、本当に前日のデータがある時だけ昨日比を表示します。";
+        `潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。水温欄には、本当に前日のデータがある時だけ昨日比を表示します。Ver.${APP_VERSION} では週間カードの評価を一本化し、強風時は上限カットを行います。`;
       document.getElementById("statusText").textContent = "実データを更新しました。";
 
       renderAll();
@@ -1662,6 +1686,7 @@
   document.getElementById("saveLogBtn").addEventListener("click", saveLog);
   document.getElementById("clearLogBtn").addEventListener("click", clearLogs);
 
+  initVersionTexts();
   document.getElementById("logDate").value = ymd();
   renderLogs();
   renderAll();
