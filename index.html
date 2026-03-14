@@ -311,7 +311,7 @@
 <body>
 <div class="wrap">
   <h1>星賀・船越 青物攻略チェックアプリ Ver.3.0</h1>
-  <div class="sub">前日予測 / 当日判断 / 1週間おすすめ / 釣れそう度スコア / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正</div>
+  <div class="sub">前日予測 / 当日判断 / 1週間おすすめ / 釣れそう度スコア / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 水温昨日比 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正</div>
 
   <div class="panel hero">
     <h2>今日の結論</h2>
@@ -477,6 +477,7 @@
 
 <script>
   const LOG_KEY = "seiga-funakoshi-log-v241";
+  const WATER_TEMP_HISTORY_KEY = "seiga-funakoshi-water-temp-history-v300";
 
   const spotRules = {
     hoshiga: {
@@ -602,6 +603,7 @@
     tideWeek: [],
     windCurrent: null,
     tempCurrent: null,
+    tempDiffText: "昨日比 データなし",
     weatherCurrent: null,
     weatherWeek: [],
     airTempCurrent: null
@@ -641,6 +643,65 @@
 
   function setLogs(logs) {
     localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+  }
+
+  function getWaterTempHistory() {
+    try {
+      return JSON.parse(localStorage.getItem(WATER_TEMP_HISTORY_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  }
+
+  function setWaterTempHistory(data) {
+    localStorage.setItem(WATER_TEMP_HISTORY_KEY, JSON.stringify(data));
+  }
+
+  function pruneOldWaterTempDates(byDate, keepDays = 7) {
+    const keys = Object.keys(byDate).sort();
+    if (keys.length <= keepDays) return byDate;
+
+    const trimmed = {};
+    keys.slice(-keepDays).forEach(k => {
+      trimmed[k] = byDate[k];
+    });
+    return trimmed;
+  }
+
+  function buildWaterTempDiffText(spot, currentValue) {
+    if (!Number.isFinite(currentValue)) {
+      return "昨日比 データなし";
+    }
+
+    const history = getWaterTempHistory();
+    const spotHistory = history[spot]?.byDate || {};
+    const yesterdayKey = ymd(addDays(new Date(), -1));
+    const yesterdayValue = spotHistory[yesterdayKey];
+
+    if (!Number.isFinite(yesterdayValue)) {
+      return "昨日比 データなし";
+    }
+
+    const diff = currentValue - Number(yesterdayValue);
+    const sign = diff > 0 ? "+" : "";
+    return `昨日比 ${sign}${diff.toFixed(1)}℃`;
+  }
+
+  function saveCurrentWaterTempForToday(spot, currentValue) {
+    if (!Number.isFinite(currentValue)) return;
+
+    const history = getWaterTempHistory();
+    const todayKey = ymd();
+    const currentSpotHistory = history[spot]?.byDate || {};
+
+    currentSpotHistory[todayKey] = currentValue;
+
+    history[spot] = {
+      byDate: pruneOldWaterTempDates(currentSpotHistory, 7),
+      savedAt: new Date().toISOString()
+    };
+
+    setWaterTempHistory(history);
   }
 
   function degTo16Dir(deg) {
@@ -1474,7 +1535,9 @@
         : "未取得";
 
     document.getElementById("liveTemp").textContent =
-      liveState.tempCurrent?.text || "未取得";
+      liveState.tempCurrent?.value != null
+        ? `${liveState.tempCurrent.text}\n${liveState.tempDiffText}`
+        : "未取得";
 
     document.getElementById("liveMethod").textContent = todayResult.flowMethod;
     document.getElementById("logSpot").value = spot;
@@ -1579,8 +1642,11 @@
       liveState.weatherWeek = buildWeatherWeek(weatherJson);
       liveState.tempCurrent = tempDisplayFromMarine(marineJson);
 
+      liveState.tempDiffText = buildWaterTempDiffText(spot, liveState.tempCurrent?.value);
+      saveCurrentWaterTempForToday(spot, liveState.tempCurrent?.value);
+
       document.getElementById("liveDataNote").textContent =
-        "潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。";
+        "潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。水温欄には、本当に前日のデータがある時だけ昨日比を表示します。";
       document.getElementById("statusText").textContent = "実データを更新しました。";
 
       renderAll();
