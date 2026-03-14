@@ -1246,6 +1246,40 @@
     `;
   }
 
+  function renderTomorrowV31(boxId, title, result, tideDay, weatherObj, fishingScore) {
+    const box = document.getElementById(boxId);
+
+    const weatherWindTempText = makeWeatherWindTempText(
+      weatherObj,
+      { dir16: weatherObj?.dir16, speed: weatherObj?.windSpeed },
+      rangeAirTempText(weatherObj?.tempMax, weatherObj?.tempMin)
+    );
+
+    const tideExtra = tideDay
+      ? `${tideDay.tideName} / 潮差 ${tideDay.range}cm / 満潮 ${fmtJmaEvents(tideDay.highs)} / 干潮 ${fmtJmaEvents(tideDay.lows)}`
+      : "潮データ未取得";
+
+    box.innerHTML = `
+      <span class="label ${fishingScore.rankClass}">${fishingScore.rank}</span>
+      <div class="score">${fishingScore.stars}</div>
+      <div class="meta">
+        <div><strong>${title}</strong></div>
+        <div class="fishing-score-box">
+          <div class="fishing-score-title">Ver.${APP_VERSION} 釣れそう度</div>
+          <div class="fishing-score-line">${fishingScore.stars} / ${fishingScore.rank} / ${fishingScore.totalScore}点</div>
+        </div>
+        <div class="bullet">おすすめフロー：${result.flowMethod}</div>
+        <div class="bullet">通常カゴ：${result.normalKago.label}</div>
+        <div class="bullet">遠投ロケットカゴ：${result.rocketKago.label}</div>
+        <div class="bullet">泳がせ：${result.liveBait.label}</div>
+        <div class="bullet">天気・風・気温：${weatherWindTempText}</div>
+        <div class="bullet">コメント：${result.comments.join("。")}</div>
+        <div class="bullet">潮詳細：${tideExtra}</div>
+        <div class="small" style="margin-top:8px;">明日の前日予測は Ver.${APP_VERSION} の釣れそう度表示に統一しています。</div>
+      </div>
+    `;
+  }
+
   function getFirstHighTideHour(highs) {
     if (!Array.isArray(highs) || highs.length === 0) return null;
     const first = highs[0]?.time;
@@ -1501,18 +1535,21 @@
       currentAirTempText(liveState.airTempCurrent)
     );
 
-    const tomorrowWeatherWindTempText = makeWeatherWindTempText(
-      liveState.weatherWeek[1],
-      { dir16: liveState.weatherWeek[1]?.dir16, speed: liveState.weatherWeek[1]?.windSpeed },
-      rangeAirTempText(liveState.weatherWeek[1]?.tempMax, liveState.weatherWeek[1]?.tempMin)
-    );
-
     const tideRanges = liveState.tideWeek
       .map(d => d?.range)
       .filter(v => Number.isFinite(v));
 
     const minRange = tideRanges.length ? Math.min(...tideRanges) : 0;
     const maxRange = tideRanges.length ? Math.max(...tideRanges) : 0;
+
+    const tomorrowFishing = calculateFishingScoreV3({
+      spot,
+      tideDay: liveState.tideTomorrow || liveState.tideToday,
+      weather: liveState.weatherWeek[1] || null,
+      waterTemp: liveState.tempCurrent?.value,
+      minRange,
+      maxRange
+    });
 
     const weekList = liveState.tideWeek.length > 0
       ? liveState.tideWeek.map((tideDay, i) => {
@@ -1581,13 +1618,20 @@
     renderHero(todayResult, spot);
     renderMethod3(todayResult);
     renderSummary("todayBox", "今日の総合判定", todayResult, liveState.tideToday, todayWeatherWindTempText, "today");
-    renderSummary("tomorrowBox", "明日の前日予測", tomorrowResult, liveState.tideTomorrow, tomorrowWeatherWindTempText, "tomorrow");
+    renderTomorrowV31(
+      "tomorrowBox",
+      "明日の前日予測",
+      tomorrowResult,
+      liveState.tideTomorrow,
+      liveState.weatherWeek[1] || null,
+      tomorrowFishing
+    );
     renderWeek(weekList);
     renderAiSummary(spot);
     renderFishSpecies(spot, todayResult, liveState.tideToday);
 
     document.getElementById("statusText").textContent =
-      `${spotRules[spot].name} のおすすめを更新しました。Ver.${APP_VERSION} の釣れそう度スコアを週間カードに表示しています。`;
+      `${spotRules[spot].name} のおすすめを更新しました。Ver.${APP_VERSION} の釣れそう度スコアを週間カードと明日の前日予測に表示しています。`;
 
     document.getElementById("liveTide").textContent =
       liveState.tideToday
@@ -1711,7 +1755,7 @@
       saveCurrentWaterTempForToday(spot, liveState.tempCurrent?.value);
 
       document.getElementById("liveDataNote").textContent =
-        `潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。水温欄には、本当に前日のデータがある時だけ昨日比を表示します。Ver.${APP_VERSION} では週間カードの評価を一本化し、強風時は上限カットを行います。`;
+        `潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。水温欄には、本当に前日のデータがある時だけ昨日比を表示します。Ver.${APP_VERSION} では週間カードと明日の前日予測の評価を統一し、強風時は上限カットを行います。`;
       document.getElementById("statusText").textContent = "実データを更新しました。";
 
       renderAll();
