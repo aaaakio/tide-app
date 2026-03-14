@@ -47,6 +47,11 @@
     font-size:18px;
     line-height:1.3;
   }
+  h3{
+    margin:8px 0 6px;
+    font-size:15px;
+    line-height:1.3;
+  }
   .sub{
     color:var(--muted);
     font-size:13px;
@@ -193,11 +198,6 @@
     font-size:22px;
     letter-spacing:1px;
   }
-  .method{
-    margin-top:6px;
-    font-size:14px;
-    font-weight:700;
-  }
   .bullet{
     margin-top:6px;
     font-size:14px;
@@ -302,8 +302,29 @@
     font-weight:700;
     line-height:1.6;
   }
+  .guide-panel{
+    border:1px solid #dbeafe;
+    background:#f8fbff;
+  }
+  .guide-grid{
+    display:grid;
+    gap:10px;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .guide-card{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px;
+    background:#ffffff;
+  }
+  .guide-item{
+    font-size:14px;
+    line-height:1.8;
+    margin-top:2px;
+  }
+
   @media (max-width:700px){
-    .grid2,.grid3,.tri-grid{grid-template-columns:1fr}
+    .grid2,.grid3,.tri-grid,.guide-grid{grid-template-columns:1fr}
     .score{font-size:28px}
   }
 </style>
@@ -406,6 +427,27 @@
   <div class="panel">
     <h2>明日の前日予測</h2>
     <div id="tomorrowBox"></div>
+  </div>
+
+  <div class="panel guide-panel" id="lunchGuidePanel">
+    <h2>昼釣りの潮タイミング目安（港別）</h2>
+    <div class="guide-grid">
+      <div class="guide-card">
+        <h3>星賀</h3>
+        <div class="guide-item">★★★★★ 本命：満潮前 90分〜直前</div>
+        <div class="guide-item">★★★★☆ 次点：満潮後 45分まで</div>
+        <div class="guide-item">★★★☆☆ 補助：干潮後 60〜120分</div>
+      </div>
+      <div class="guide-card">
+        <h3>船越</h3>
+        <div class="guide-item">★★★★★ 本命：満潮前 120〜0分</div>
+        <div class="guide-item">★★★★☆ 次点：干潮後 30〜120分</div>
+        <div class="guide-item">★★★☆☆ 補助：満潮後 30分まで</div>
+      </div>
+    </div>
+    <div class="small" style="margin-top:8px;">
+      ※ 昼釣り時の目安です。風・潮差・海況・実際の釣行条件と合わせて判断してください。
+    </div>
   </div>
 
   <div class="panel">
@@ -668,7 +710,6 @@
   function pruneOldWaterTempDates(byDate, keepDays = 7) {
     const keys = Object.keys(byDate).sort();
     if (keys.length <= keepDays) return byDate;
-
     const trimmed = {};
     keys.slice(-keepDays).forEach(k => {
       trimmed[k] = byDate[k];
