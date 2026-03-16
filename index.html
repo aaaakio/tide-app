@@ -322,6 +322,12 @@
     line-height:1.8;
     margin-top:2px;
   }
+  .tide-message{
+    font-size:16px;
+    font-weight:700;
+    margin-bottom:4px;
+    color:#166534;
+  }
 
   @media (max-width:700px){
     .grid2,.grid3,.tri-grid,.guide-grid{grid-template-columns:1fr}
@@ -420,7 +426,7 @@
   </div>
 
   <div class="panel">
-    <h2>今日の当日判断</h2>
+    <h2 id="seaNowTitle">現在の海況判断</h2>
     <div id="todayBox"></div>
   </div>
 
@@ -659,6 +665,37 @@
       `Ver.${APP_VERSION} / 前日予測 / 当日判断 / 1週間おすすめ / 釣れそう度スコア / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 水温昨日比 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正`;
   }
 
+  function updateSeaNowTitle() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,"0");
+    const m = String(now.getMinutes()).padStart(2,"0");
+
+    let tideText = "";
+    if (liveState.tideToday && liveState.tideToday.highs) {
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      const highs = liveState.tideToday.highs
+        .map(h => hhmmToMinutes(h.time))
+        .filter(v => v != null);
+
+      let nextDiff = null;
+      highs.forEach(highMin => {
+        const diff = highMin - nowMin;
+        if (diff >= 0 && (nextDiff === null || diff < nextDiff)) {
+          nextDiff = diff;
+        }
+      });
+
+      if (nextDiff !== null) {
+        tideText = ` / 次の満潮まで ${nextDiff}分`;
+      }
+    }
+
+    const title = document.getElementById("seaNowTitle");
+    if (title) {
+      title.textContent = `現在の海況判断（現在時刻 ${h}:${m}${tideText}）`;
+    }
+  }
+
   function addDays(base, plus) {
     const d = new Date(base);
     d.setDate(d.getDate() + plus);
@@ -721,7 +758,6 @@
     if (!Number.isFinite(currentValue)) {
       return "昨日比 データなし";
     }
-
     const history = getWaterTempHistory();
     const spotHistory = history[spot]?.byDate || {};
     const yesterdayKey = ymd(addDays(new Date(), -1));
@@ -742,7 +778,6 @@
     const history = getWaterTempHistory();
     const todayKey = ymd();
     const currentSpotHistory = history[spot]?.byDate || {};
-
     currentSpotHistory[todayKey] = currentValue;
 
     history[spot] = {
@@ -822,7 +857,6 @@
       normal = -3; rocket = -4; live = -3; overall = -3;
       comment = "風がかなり強く、全体に厳しい";
     }
-
     return { normal, rocket, live, overall, comment };
   }
 
@@ -850,7 +884,6 @@
       normal = -1; rocket = 0; live = -2; overall = -1;
       comment = "潮があまり動かず、特に泳がせは厳しめ";
     }
-
     return { normal, rocket, live, overall, comment };
   }
 
@@ -975,7 +1008,8 @@
         starText: makeStarText(stars)
       },
       flowMethod: methodFlow,
-      comments
+      comments,
+      tideTimingMessage: ""
     };
   }
 
@@ -1070,7 +1104,6 @@
       const combined = mergeTideData(msilDay, jmaRaw);
       arr.push(combined);
     }
-
     return arr;
   }
 
@@ -1231,6 +1264,7 @@
 
     box.innerHTML = `
       ${renderLabel(labelObj)}
+      ${dayType === "today" && result.tideTimingMessage ? `<div class="tide-message">${result.tideTimingMessage}</div>` : ""}
       <div class="score">${result.overall.starText}</div>
       <div class="meta">
         <div><strong>${title}</strong></div>
@@ -1241,7 +1275,7 @@
         <div class="bullet">天気・風・気温：${weatherWindTempText}</div>
         <div class="bullet">コメント：${result.comments.join("。")}</div>
         <div class="bullet">潮詳細：${tideExtra}</div>
-        <div class="small" style="margin-top:8px;">${dayType === "today" ? "当日判断" : "前日予測"}は、風向・風速・潮位差・潮名・JMA満潮干潮・天気・気温を反映しています。</div>
+        <div class="small" style="margin-top:8px;">${dayType === "today" ? "現在時刻の潮タイミング補正を反映した当日判断です。" : "前日予測は、風向・風速・潮位差・潮名・JMA満潮干潮・天気・気温を反映しています。"}</div>
       </div>
     `;
   }
@@ -1437,6 +1471,85 @@
     };
   }
 
+  function nowMinutes() {
+    const now = new Date();
+    return now.getHours() * 60 + now.getMinutes();
+  }
+
+  function hhmmToMinutes(hhmm) {
+    if (!hhmm || !hhmm.includes(":")) return null;
+    const [h, m] = hhmm.split(":").map(Number);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+    return h * 60 + m;
+  }
+
+  function getTideTimingBonus(spot, tideDay) {
+    if (!tideDay) return { bonus: 0, text: "", level: 0 };
+
+    const nowMin = nowMinutes();
+    const highs = (tideDay.highs || []).map(h => hhmmToMinutes(h.time)).filter(v => v != null);
+    const lows = (tideDay.lows || []).map(l => hhmmToMinutes(l.time)).filter(v => v != null);
+
+    let bestBonus = 0;
+    let bestText = "";
+    let level = 0;
+
+    if (spot === "hoshiga") {
+      highs.forEach(highMin => {
+        const diff = highMin - nowMin;
+        if (diff >= 0 && diff <= 90 && bestBonus < 3) {
+          bestBonus = 3;
+          bestText = "現在は満潮前の本命帯";
+          level = 4;
+        }
+        if (diff < 0 && Math.abs(diff) <= 45 && bestBonus < 2) {
+          bestBonus = 2;
+          bestText = "現在は満潮後の次点帯";
+          level = 3;
+        }
+      });
+
+      lows.forEach(lowMin => {
+        const diff = nowMin - lowMin;
+        if (diff >= 60 && diff <= 120 && bestBonus < 1) {
+          bestBonus = 1;
+          bestText = "現在は干潮後の補助帯";
+          level = 2;
+        }
+      });
+    }
+
+    if (spot === "funakoshi") {
+      highs.forEach(highMin => {
+        const diff = highMin - nowMin;
+        if (diff >= 0 && diff <= 120 && bestBonus < 3) {
+          bestBonus = 3;
+          bestText = "現在は満潮前の本命帯";
+          level = 4;
+        }
+        if (diff < 0 && Math.abs(diff) <= 30 && bestBonus < 1) {
+          bestBonus = 1;
+          bestText = "現在は満潮後の補助帯";
+          level = 2;
+        }
+      });
+
+      lows.forEach(lowMin => {
+        const diff = nowMin - lowMin;
+        if (diff >= 30 && diff <= 120 && bestBonus < 2) {
+          bestBonus = 2;
+          bestText = "現在は干潮後の次点帯";
+          level = 3;
+        }
+      });
+    }
+
+    if (level >= 4) return { bonus: bestBonus, text: bestText, level, summary: "本命時合です" };
+    if (level >= 3) return { bonus: bestBonus, text: bestText, level, summary: "次点の時合です" };
+    if (level >= 2) return { bonus: bestBonus, text: bestText, level, summary: "補助的な時合です" };
+    return { bonus: bestBonus, text: bestText, level, summary: "時合はやや遠いです" };
+  }
+
   function renderWeek(weekList) {
     const spot = document.getElementById("spotSelect").value;
     const box = document.getElementById("weekBox");
@@ -1485,7 +1598,7 @@
 
     document.getElementById("heroScore").textContent = result.overall.starText;
     document.getElementById("heroMethod").textContent = `おすすめ：${result.flowMethod}`;
-    document.getElementById("heroComment").textContent = result.comments.join("。");
+    document.getElementById("heroComment").textContent = result.comments.slice(0, 3).join("。");
     document.getElementById("heroNote").textContent = `${spotRules[spot].name} / ${spotRules[spot].tendency}`;
   }
 
@@ -1506,12 +1619,12 @@
     `;
   }
 
-  function buildCurrentResult(spot, tideDay, windDeg, windSpeed, timeBand = "朝") {
+  function buildCurrentResult(spot, tideDay, windDeg, windSpeed, timeBand = "朝", applyTideTiming = false) {
     const ai = buildAiProfile(spot);
     const dir16 = degTo16Dir(windDeg);
     const tideRangeCm = tideDay?.range ?? 80;
 
-    return evaluateFishingConditionV241({
+    const result = evaluateFishingConditionV241({
       place: spot,
       windDir16: dir16,
       windSpeed: Number(windSpeed) || 4,
@@ -1519,6 +1632,24 @@
       ai,
       timeBand
     });
+
+    if (applyTideTiming) {
+      const tideTiming = getTideTimingBonus(spot, tideDay);
+      result.overall.score += tideTiming.bonus;
+      result.overall.stars = scoreToStars(result.overall.score);
+      result.overall.starText = makeStarText(result.overall.stars);
+
+      const labelObj = scoreToOverallLabel(result.overall.score);
+      result.overall.label = labelObj.text;
+      result.overall.cls = labelObj.cls;
+      result.tideTimingMessage = tideTiming.summary || "";
+
+      if (tideTiming.text) {
+        result.comments.unshift(tideTiming.text);
+      }
+    }
+
+    return result;
   }
 
   function renderAll() {
@@ -1526,8 +1657,23 @@
     const windDeg = liveState.windCurrent?.deg ?? 45;
     const windSpeed = liveState.windCurrent?.speed ?? 4.0;
 
-    const todayResult = buildCurrentResult(spot, liveState.tideToday, windDeg, windSpeed, "朝");
-    const tomorrowResult = buildCurrentResult(spot, liveState.tideTomorrow || liveState.tideToday, windDeg, windSpeed, "朝");
+    const todayResult = buildCurrentResult(
+      spot,
+      liveState.tideToday,
+      windDeg,
+      windSpeed,
+      "朝",
+      true
+    );
+
+    const tomorrowResult = buildCurrentResult(
+      spot,
+      liveState.tideTomorrow || liveState.tideToday,
+      windDeg,
+      windSpeed,
+      "朝",
+      false
+    );
 
     const todayWeatherWindTempText = makeWeatherWindTempText(
       liveState.weatherCurrent,
@@ -1559,7 +1705,8 @@
             tideDay,
             w?.windDeg ?? windDeg,
             w?.windSpeed ?? windSpeed,
-            i % 2 === 0 ? "朝" : "夕"
+            i % 2 === 0 ? "朝" : "夕",
+            false
           );
 
           const fishing = calculateFishingScoreV3({
@@ -1594,7 +1741,8 @@
             dummyTide,
             w?.windDeg ?? windDeg,
             w?.windSpeed ?? windSpeed,
-            i % 2 === 0 ? "朝" : "夕"
+            i % 2 === 0 ? "朝" : "夕",
+            false
           );
 
           const fishing = calculateFishingScoreV3({
@@ -1617,7 +1765,7 @@
 
     renderHero(todayResult, spot);
     renderMethod3(todayResult);
-    renderSummary("todayBox", "今日の総合判定", todayResult, liveState.tideToday, todayWeatherWindTempText, "today");
+    renderSummary("todayBox", "現在の海況判断", todayResult, liveState.tideToday, todayWeatherWindTempText, "today");
     renderTomorrowV31(
       "tomorrowBox",
       "明日の前日予測",
@@ -1629,6 +1777,7 @@
     renderWeek(weekList);
     renderAiSummary(spot);
     renderFishSpecies(spot, todayResult, liveState.tideToday);
+    updateSeaNowTitle();
 
     document.getElementById("statusText").textContent =
       `${spotRules[spot].name} のおすすめを更新しました。Ver.${APP_VERSION} の釣れそう度スコアを週間カードと明日の前日予測に表示しています。`;
@@ -1755,7 +1904,7 @@
       saveCurrentWaterTempForToday(spot, liveState.tempCurrent?.value);
 
       document.getElementById("liveDataNote").textContent =
-        `潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。水温欄には、本当に前日のデータがある時だけ昨日比を表示します。Ver.${APP_VERSION} では週間カードと明日の前日予測の評価を統一し、強風時は上限カットを行います。`;
+        `潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。水温欄には、本当に前日のデータがある時だけ昨日比を表示します。Ver.${APP_VERSION} では週間カードと明日の前日予測の評価を統一し、現在の海況判断には現在時刻の潮タイミング補正と時合の一行要約を入れています。`;
       document.getElementById("statusText").textContent = "実データを更新しました。";
 
       renderAll();
@@ -1772,6 +1921,7 @@
   document.getElementById("clearLogBtn").addEventListener("click", clearLogs);
 
   initVersionTexts();
+  updateSeaNowTitle();
   document.getElementById("logDate").value = ymd();
   renderLogs();
   renderAll();
