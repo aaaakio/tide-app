@@ -338,7 +338,7 @@
 <body>
 <div class="wrap">
   <h1 id="appTitle">星賀・船越 青物攻略チェックアプリ</h1>
-  <div class="sub" id="appSub">前日予測 / 当日判断 / 1週間おすすめ / 釣れそう度スコア / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 水温昨日比 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正</div>
+  <div class="sub" id="appSub">前日予測 / 当日判断 / 1週間おすすめ / 釣れそう度スコア / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 水温昨日比 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正 / 星賀アジ攻略ロジック</div>
 
   <div class="panel hero">
     <h2>今日の結論</h2>
@@ -428,6 +428,44 @@
   <div class="panel">
     <h2 id="seaNowTitle">現在の海況判断</h2>
     <div id="todayBox"></div>
+  </div>
+
+  <div class="panel guide-panel" id="ajiLogicPanel">
+    <h2>星賀 完全攻略ロジック（A/B/C＋時間＋風）</h2>
+    <div class="guide-grid">
+      <div class="guide-card">
+        <h3>現在の推奨</h3>
+        <div class="guide-item" id="ajiNowBand">時間帯：-</div>
+        <div class="guide-item" id="ajiNowDir">方向：-</div>
+        <div class="guide-item" id="ajiNowRange">タナ：-</div>
+        <div class="guide-item" id="ajiNowWind">風補正：-</div>
+      </div>
+      <div class="guide-card">
+        <h3>一行要約</h3>
+        <div class="guide-item" id="ajiNowSummary">-</div>
+        <div class="small" id="ajiNowDetail" style="margin-top:8px;">-</div>
+      </div>
+    </div>
+    <div class="guide-grid" style="margin-top:10px;">
+      <div class="guide-card">
+        <h3>ポイント定義</h3>
+        <div class="guide-item">A：沿岸ライン（浅め・根あり）</div>
+        <div class="guide-item">B：港出口〜沖ライン（昼の本線）</div>
+        <div class="guide-item">C：足元〜堤防際（朝夕夜に有効）</div>
+      </div>
+      <div class="guide-card">
+        <h3>時間帯別の基本</h3>
+        <div class="guide-item">朝まずめ：C → B / 2〜5m</div>
+        <div class="guide-item">朝〜昼：B / 5〜8m</div>
+        <div class="guide-item">昼：B / 底から1m</div>
+        <div class="guide-item">夕方前：B → A / 6〜8m</div>
+        <div class="guide-item">夕まずめ：B → A → C / 3〜6m</div>
+        <div class="guide-item">夜：C → A / 1〜4m</div>
+      </div>
+    </div>
+    <div class="small" style="margin-top:8px;">
+      ※ 星賀のアジ確保を想定した現場ロジックです。昼はB方向優先、夜はC優先を基本にしています。
+    </div>
   </div>
 
   <div class="panel">
@@ -524,7 +562,7 @@
 </div>
 
 <script>
-  const APP_VERSION = "3.1";
+  const APP_VERSION = "3.2";
   const LOG_KEY = "seiga-funakoshi-log-v241";
   const WATER_TEMP_HISTORY_KEY = "seiga-funakoshi-water-temp-history-v300";
 
@@ -662,7 +700,7 @@
     document.title = `星賀・船越 青物攻略チェックアプリ Ver.${APP_VERSION}`;
     document.getElementById("appTitle").textContent = `星賀・船越 青物攻略チェックアプリ Ver.${APP_VERSION}`;
     document.getElementById("appSub").textContent =
-      `Ver.${APP_VERSION} / 前日予測 / 当日判断 / 1週間おすすめ / 釣れそう度スコア / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 水温昨日比 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正`;
+      `Ver.${APP_VERSION} / 前日予測 / 当日判断 / 1週間おすすめ / 釣れそう度スコア / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 水温昨日比 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正 / 星賀アジ攻略ロジック`;
   }
 
   function updateSeaNowTitle() {
@@ -670,29 +708,9 @@
     const h = String(now.getHours()).padStart(2,"0");
     const m = String(now.getMinutes()).padStart(2,"0");
 
-    let tideText = "";
-    if (liveState.tideToday && liveState.tideToday.highs) {
-      const nowMin = now.getHours() * 60 + now.getMinutes();
-      const highs = liveState.tideToday.highs
-        .map(h => hhmmToMinutes(h.time))
-        .filter(v => v != null);
-
-      let nextDiff = null;
-      highs.forEach(highMin => {
-        const diff = highMin - nowMin;
-        if (diff >= 0 && (nextDiff === null || diff < nextDiff)) {
-          nextDiff = diff;
-        }
-      });
-
-      if (nextDiff !== null) {
-        tideText = ` / 次の満潮まで ${nextDiff}分`;
-      }
-    }
-
     const title = document.getElementById("seaNowTitle");
     if (title) {
-      title.textContent = `現在の海況判断（現在時刻 ${h}:${m}${tideText}）`;
+      title.textContent = `現在の海況判断（現在時刻 ${h}:${m}）`;
     }
   }
 
@@ -945,6 +963,194 @@
     if (rocketLabel === "かなり有望" || rocketLabel === "有望") return "遠投ロケットカゴ";
     if (overallScore >= 1) return "通常カゴ短時間";
     return "様子見";
+  }
+
+  function getCurrentTimeBandDetail() {
+    const now = new Date();
+    const min = now.getHours() * 60 + now.getMinutes();
+
+    if (min >= 270 && min < 420) {
+      return { appBand:"朝", logicKey:"dawn", label:"朝まずめ", range:"04:30〜07:00" };
+    }
+    if (min >= 420 && min < 660) {
+      return { appBand:"朝", logicKey:"morning", label:"朝〜昼", range:"07:00〜11:00" };
+    }
+    if (min >= 660 && min < 930) {
+      return { appBand:"昼", logicKey:"day", label:"昼", range:"11:00〜15:30" };
+    }
+    if (min >= 930 && min < 1050) {
+      return { appBand:"夕", logicKey:"lateafternoon", label:"夕方前", range:"15:30〜17:30" };
+    }
+    if (min >= 1050 && min < 1140) {
+      return { appBand:"夕", logicKey:"evening", label:"夕まずめ", range:"17:30〜日没" };
+    }
+    return { appBand:"夜", logicKey:"night", label:"夜", range:"日没後" };
+  }
+
+  function getShikaAjiLogic(timeKey, windDir16, windSpeed) {
+    const dir = windDir16 || "N";
+    const speed = Number(windSpeed || 0);
+
+    let result = {
+      bandLabel: "昼",
+      bandRange: "11:00〜15:30",
+      direction: "B",
+      directionText: "港出口〜沖ライン",
+      range: "底から1m",
+      rangeText: "水深10mなら約9m目安",
+      windText: "標準",
+      summary: "昼はB方向・底から1mが基本です。",
+      detail: "足元は浅く根掛かりしやすいため、B方向へ10〜20m投げて、着底後すぐ50cm〜1m上げて固定します。"
+    };
+
+    if (timeKey === "dawn") {
+      result = {
+        bandLabel: "朝まずめ",
+        bandRange: "04:30〜07:00",
+        direction: "C→B",
+        directionText: "足元→港出口ライン",
+        range: "2〜5m",
+        rangeText: "足元中層から開始",
+        windText: "標準",
+        summary: "朝まずめはCから入り、反応薄ければBへ移ります。",
+        detail: "群れが浮きやすい時間帯です。まず足元サビキ、反応がなければB方向へ少し投げて中層を探ります。"
+      };
+    } else if (timeKey === "morning") {
+      result = {
+        bandLabel: "朝〜昼",
+        bandRange: "07:00〜11:00",
+        direction: "B",
+        directionText: "港出口〜沖ライン",
+        range: "5〜8m",
+        rangeText: "徐々に深めへ",
+        windText: "標準",
+        summary: "朝の群れが沈み始めるので、B方向を中層下で探ります。",
+        detail: "最初は5〜6m、反応がなければ7〜8mへ。Cは短時間チェック程度にします。"
+      };
+    } else if (timeKey === "day") {
+      result = {
+        bandLabel: "昼",
+        bandRange: "11:00〜15:30",
+        direction: "B",
+        directionText: "港出口〜沖ライン",
+        range: "底から1m",
+        rangeText: "水深10mなら約9m目安",
+        windText: "標準",
+        summary: "昼はBだけを本線に。A/Cは基本使わず、底から1mを丁寧に探ります。",
+        detail: "昼の星賀は最難関です。Aは浅く、Cは足元根掛かりが増えるため、B方向へ10〜20m投げる運用が最も再現性があります。"
+      };
+    } else if (timeKey === "lateafternoon") {
+      result = {
+        bandLabel: "夕方前",
+        bandRange: "15:30〜17:30",
+        direction: "B→A",
+        directionText: "港出口→沿岸ライン",
+        range: "6〜8m",
+        rangeText: "少しずつ浮き始める",
+        windText: "標準",
+        summary: "まずBで確認し、反応が出始めたらAも試します。",
+        detail: "魚が戻り始める時間です。B方向で様子を見て、反応レンジが上がるならA方向も候補になります。"
+      };
+    } else if (timeKey === "evening") {
+      result = {
+        bandLabel: "夕まずめ",
+        bandRange: "17:30〜日没",
+        direction: "B→A→C",
+        directionText: "BからA、足元へ",
+        range: "3〜6m",
+        rangeText: "群れが浮きやすい",
+        windText: "標準",
+        summary: "夕まずめは本命時間帯。Bで始めて、群れが浮けばA〜Cへ広げます。",
+        detail: "星賀で最も期待できる時間帯です。最初はB、次にA、最後は足元Cまで視野に入れて追います。"
+      };
+    } else if (timeKey === "night") {
+      result = {
+        bandLabel: "夜",
+        bandRange: "日没後",
+        direction: "C→A",
+        directionText: "足元〜沿岸ライン",
+        range: "1〜4m",
+        rangeText: "表層〜中層",
+        windText: "標準",
+        summary: "夜はCが本命です。常夜灯や明暗があれば最優先です。",
+        detail: "足元サビキ中心で、群れが離れたらAへ。Bも悪くありませんが、優先順位は下がります。"
+      };
+    }
+
+    if (["E","ENE","ESE","SE","SSE"].includes(dir)) {
+      result.windText = "港内寄り補正";
+      result.summary += " 東寄りの風でA/Cがやや有利です。";
+    } else if (["W","WNW","WSW","NW","SW"].includes(dir)) {
+      result.windText = "沖向き補正";
+      result.summary += " 西寄りの風でBの優先度が上がります。";
+    }
+
+    if (speed >= 5) {
+      result.windText = "深め補正";
+      result.summary += " 風が強めなので1段深く探ります。";
+    }
+
+    return result;
+  }
+
+  function getFunakoshiAjiLogic(timeKey, windDir16, windSpeed) {
+    let bandLabel = "昼";
+    let bandRange = "11:00〜15:30";
+    let range = "底から1〜2m";
+    let summary = "船越は風裏を取りつつ、潮通しを優先します。";
+    let detail = "星賀ほどA/B/C固定ではなく、まず安全に風裏を確保してから潮の当たるラインを優先します。";
+
+    if (timeKey === "dawn") {
+      bandLabel = "朝まずめ";
+      bandRange = "04:30〜07:00";
+      range = "2〜5m";
+      summary = "朝まずめは中層から始めます。";
+    } else if (timeKey === "morning") {
+      bandLabel = "朝〜昼";
+      bandRange = "07:00〜11:00";
+      range = "4〜7m";
+      summary = "朝〜昼は少し深めへ移します。";
+    } else if (timeKey === "lateafternoon") {
+      bandLabel = "夕方前";
+      bandRange = "15:30〜17:30";
+      range = "5〜7m";
+      summary = "夕方前は中層下で確認します。";
+    } else if (timeKey === "evening") {
+      bandLabel = "夕まずめ";
+      bandRange = "17:30〜日没";
+      range = "3〜6m";
+      summary = "夕まずめは中層が本線です。";
+    } else if (timeKey === "night") {
+      bandLabel = "夜";
+      bandRange = "日没後";
+      range = "1〜4m";
+      summary = "夜は表層〜中層を優先します。";
+    }
+
+    return {
+      bandLabel,
+      bandRange,
+      direction: "潮通し優先",
+      directionText: "風裏を確保して外向き中心",
+      range,
+      rangeText: "海況で微調整",
+      windText: Number(windSpeed || 0) >= 5 ? "風裏必須" : "風重視",
+      summary,
+      detail
+    };
+  }
+
+  function renderAjiLogic(spot, timeDetail, windDir16, windSpeed) {
+    const logic = spot === "hoshiga"
+      ? getShikaAjiLogic(timeDetail.logicKey, windDir16, windSpeed)
+      : getFunakoshiAjiLogic(timeDetail.logicKey, windDir16, windSpeed);
+
+    document.getElementById("ajiNowBand").textContent = `時間帯：${logic.bandLabel}（${logic.bandRange}）`;
+    document.getElementById("ajiNowDir").textContent = `方向：${logic.direction} / ${logic.directionText}`;
+    document.getElementById("ajiNowRange").textContent = `タナ：${logic.range} / ${logic.rangeText}`;
+    document.getElementById("ajiNowWind").textContent = `風補正：${logic.windText}`;
+    document.getElementById("ajiNowSummary").textContent = logic.summary;
+    document.getElementById("ajiNowDetail").textContent = logic.detail;
   }
 
   function evaluateFishingConditionV241({ place, windDir16, windSpeed, tideRangeCm, ai = null, timeBand = "朝" }) {
@@ -1275,7 +1481,7 @@
         <div class="bullet">天気・風・気温：${weatherWindTempText}</div>
         <div class="bullet">コメント：${result.comments.join("。")}</div>
         <div class="bullet">潮詳細：${tideExtra}</div>
-        <div class="small" style="margin-top:8px;">${dayType === "today" ? "現在時刻の潮タイミング補正を反映した当日判断です。" : "前日予測は、風向・風速・潮位差・潮名・JMA満潮干潮・天気・気温を反映しています。"}</div>
+        <div class="small" style="margin-top:8px;">${dayType === "today" ? "現在時刻の潮タイミング補正と時間帯判定を反映した当日判断です。" : "前日予測は、風向・風速・潮位差・潮名・JMA満潮干潮・天気・気温を反映しています。"}</div>
       </div>
     `;
   }
@@ -1656,13 +1862,14 @@
     const spot = document.getElementById("spotSelect").value;
     const windDeg = liveState.windCurrent?.deg ?? 45;
     const windSpeed = liveState.windCurrent?.speed ?? 4.0;
+    const timeDetail = getCurrentTimeBandDetail();
 
     const todayResult = buildCurrentResult(
       spot,
       liveState.tideToday,
       windDeg,
       windSpeed,
-      "朝",
+      timeDetail.appBand,
       true
     );
 
@@ -1700,12 +1907,13 @@
     const weekList = liveState.tideWeek.length > 0
       ? liveState.tideWeek.map((tideDay, i) => {
           const w = liveState.weatherWeek[i] || null;
+          const weekBand = i % 2 === 0 ? "朝" : "夕";
           const result = buildCurrentResult(
             spot,
             tideDay,
             w?.windDeg ?? windDeg,
             w?.windSpeed ?? windSpeed,
-            i % 2 === 0 ? "朝" : "夕",
+            weekBand,
             false
           );
 
@@ -1777,10 +1985,11 @@
     renderWeek(weekList);
     renderAiSummary(spot);
     renderFishSpecies(spot, todayResult, liveState.tideToday);
+    renderAjiLogic(spot, timeDetail, degTo16Dir(windDeg), windSpeed);
     updateSeaNowTitle();
 
     document.getElementById("statusText").textContent =
-      `${spotRules[spot].name} のおすすめを更新しました。Ver.${APP_VERSION} の釣れそう度スコアを週間カードと明日の前日予測に表示しています。`;
+      `${spotRules[spot].name} のおすすめを更新しました。Ver.${APP_VERSION} では現在の海況判断を現在時刻ベースにし、星賀アジ攻略ロジックを追加しています。`;
 
     document.getElementById("liveTide").textContent =
       liveState.tideToday
@@ -1904,7 +2113,7 @@
       saveCurrentWaterTempForToday(spot, liveState.tempCurrent?.value);
 
       document.getElementById("liveDataNote").textContent =
-        `潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。水温欄には、本当に前日のデータがある時だけ昨日比を表示します。Ver.${APP_VERSION} では週間カードと明日の前日予測の評価を統一し、現在の海況判断には現在時刻の潮タイミング補正と時合の一行要約を入れています。`;
+        `潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。水温欄には、本当に前日のデータがある時だけ昨日比を表示します。Ver.${APP_VERSION} では、現在の海況判断の見出しを現在時刻だけに整理し、時間帯連動の星賀アジ攻略ロジックを追加しています。`;
       document.getElementById("statusText").textContent = "実データを更新しました。";
 
       renderAll();
