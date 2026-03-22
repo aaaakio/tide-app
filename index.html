@@ -7,7 +7,7 @@
 <style>
   :root{
     --bg:#eef3f8;
-    --card:#ffffff;div class
+    --card:#ffffff;
     --text:#1f2937;
     --muted:#6b7280;
     --line:#dbe3ec;
@@ -609,7 +609,7 @@
 </div>
 
 <script>
-  const APP_VERSION = "3.2.3";
+  const APP_VERSION = "3.3.0";
 
   const PRIMARY_LOG_KEY = "seiga-funakoshi-log-v241";
   const LOG_KEYS = [
@@ -868,19 +868,174 @@
     localStorage.setItem(PRIMARY_LOG_KEY, JSON.stringify(safeLogs));
   }
 
-  function getCatchCountFromResult(log) { ... }
+  function getCatchCountFromResult(log) {
+    if (!log) return 0;
+    const result = String(log.result || "");
+    if (result === "釣れた") return 2;
+    if (result === "反応あり") return 1;
+    return 0;
+  }
 
-  function getCurrentAnalysisSource() { ... }
+  function getCurrentAnalysisSource() {
+    const spot = document.getElementById("spotSelect")?.value || "hoshiga";
+    const timeDetail = getCurrentTimeBandDetail();
+    return {
+      spot,
+      timeBand: timeDetail.appBand,
+      method: document.getElementById("heroMethod")?.textContent || "",
+      tideName: liveState.tideToday?.tideName || "",
+      tideRange: Number(liveState.tideToday?.range || 0),
+      windDir16: liveState.windCurrent?.dir16 || "",
+      windSpeed: Number(liveState.windCurrent?.speed || 0),
+      weatherText: liveState.weatherCurrent?.text || "",
+      waterTemp: Number(liveState.tempCurrent?.value || 0)
+    };
+  }
 
-  function runLogAnalysis() { ... }
+  function countTop(items) {
+    const map = {};
+    items.forEach(v => {
+      const key = String(v || "不明");
+      map[key] = (map[key] || 0) + 1;
+    });
+    const arr = Object.entries(map).sort((a,b) => b[1] - a[1]);
+    return arr.length ? `${arr[0][0]}（${arr[0][1]}件）` : "データなし";
+  }
 
-  function calcLogSimilarity(todayLike, log) { ... }
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
 
-  function showSimilarLogs() { ... }
+  function runLogAnalysis() {
+    const resultBox = document.getElementById("analysisResult");
+    const spot = document.getElementById("spotSelect")?.value || "hoshiga";
+    const logs = getLogs().filter(log => log.spot === spot);
+    const successLogs = logs.filter(log => getCatchCountFromResult(log) > 0);
 
-  function showWinPatterns() { ... }
+    if (!logs.length) {
+      resultBox.innerHTML = `<div class="analysis-card"><div class="analysis-title">釣果ログ分析</div><div class="analysis-line">まだこの港のログがありません。</div></div>`;
+      return;
+    }
 
-  function bindAnalysisButtons() { ... }
+    if (!successLogs.length) {
+      resultBox.innerHTML = `<div class="analysis-card"><div class="analysis-title">釣果ログ分析</div><div class="analysis-line">ログはありますが、まだ「釣れた / 反応あり」の記録がありません。</div></div>`;
+      return;
+    }
+
+    const spotName = spotRules[spot]?.name || spot;
+    const topTime = countTop(successLogs.map(log => log.timeBand));
+    const topMethod = countTop(successLogs.map(log => log.method));
+    const topFish = countTop(successLogs.map(log => log.fish || "記録なし"));
+    const topMemo = successLogs.map(log => log.memo).filter(Boolean).slice(0, 3);
+
+    resultBox.innerHTML = `
+      <div class="analysis-card">
+        <div class="analysis-title">釣れた条件の自動分析</div>
+        <div class="analysis-line">対象港：${escapeHtml(spotName)}</div>
+        <div class="analysis-line">成功ログ数：${successLogs.length}件 / 全ログ数：${logs.length}件</div>
+        <div class="analysis-line">強い時間帯：${escapeHtml(topTime)}</div>
+        <div class="analysis-line">強い釣法：${escapeHtml(topMethod)}</div>
+        <div class="analysis-line">目立つ魚種記録：${escapeHtml(topFish)}</div>
+        <div class="analysis-line">一言まとめ：${escapeHtml(spotName)}では「${topTime.replace(/（.*$/,"")} × ${topMethod.replace(/（.*$/,"")}」がまず軸です。</div>
+        ${topMemo.length ? `<div class="analysis-line">参考メモ：${topMemo.map(escapeHtml).join(" / ")}</div>` : ""}
+      </div>
+    `;
+  }
+
+  function calcLogSimilarity(todayLike, log) {
+    let score = 0;
+    if (!todayLike || !log) return score;
+
+    if (todayLike.spot && todayLike.spot === log.spot) score += 40;
+    if (todayLike.timeBand && todayLike.timeBand === log.timeBand) score += 25;
+
+    const heroMethod = String(todayLike.method || "");
+    if (heroMethod.includes(log.method)) score += 20;
+
+    if (todayLike.tideName && todayLike.tideName === (log.tideName || "")) score += 10;
+    if (todayLike.windDir16 && todayLike.windDir16 === (log.windDir16 || "")) score += 5;
+
+    score += getCatchCountFromResult(log) * 5;
+    return score;
+  }
+
+  function showSimilarLogs() {
+    const resultBox = document.getElementById("analysisResult");
+    const todayLike = getCurrentAnalysisSource();
+    const logs = getLogs()
+      .filter(log => log.spot === todayLike.spot)
+      .map(log => ({ log, score: calcLogSimilarity(todayLike, log) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    if (!logs.length) {
+      resultBox.innerHTML = `<div class="analysis-card"><div class="analysis-title">今日に近い過去ログ</div><div class="analysis-line">比較できるログがありません。</div></div>`;
+      return;
+    }
+
+    resultBox.innerHTML = `
+      <div class="analysis-card">
+        <div class="analysis-title">今日の条件に近い過去ログ</div>
+        ${logs.map(item => `
+          <div class="similar-log-item">
+            <div class="analysis-line">一致度：${item.score}点</div>
+            <div class="analysis-line">${escapeHtml(item.log.date)} / ${escapeHtml(spotRules[item.log.spot]?.name || item.log.spot)} / ${escapeHtml(item.log.timeBand)}</div>
+            <div class="analysis-line">釣法：${escapeHtml(item.log.method)} / 結果：${escapeHtml(item.log.result)}</div>
+            <div class="analysis-line">魚種：${escapeHtml(item.log.fish || "記録なし")}</div>
+            <div class="analysis-line">メモ：${escapeHtml(item.log.memo || "- ")}</div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function showWinPatterns() {
+    const resultBox = document.getElementById("analysisResult");
+    const spot = document.getElementById("spotSelect")?.value || "hoshiga";
+    const successLogs = getLogs().filter(log => log.spot === spot && getCatchCountFromResult(log) > 0);
+
+    if (!successLogs.length) {
+      resultBox.innerHTML = `<div class="analysis-card"><div class="analysis-title">勝ちパターン</div><div class="analysis-line">勝ちパターンを作るだけの成功ログがまだありません。</div></div>`;
+      return;
+    }
+
+    const grouped = {};
+    successLogs.forEach(log => {
+      const key = `${log.timeBand} / ${log.method}`;
+      if (!grouped[key]) grouped[key] = { count: 0, fish: [] };
+      grouped[key].count += 1;
+      if (log.fish) grouped[key].fish.push(log.fish);
+    });
+
+    const patterns = Object.entries(grouped)
+      .map(([key, value]) => ({ key, count: value.count, fishTop: countTop(value.fish.length ? value.fish : ["記録なし"]) }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    resultBox.innerHTML = `
+      <div class="analysis-card">
+        <div class="analysis-title">勝ちパターン</div>
+        ${patterns.map((pattern, index) => `
+          <div class="pattern-item">
+            <div class="analysis-line">勝ちパターン${index + 1}：${escapeHtml(pattern.key)}</div>
+            <div class="analysis-line">成立回数：${pattern.count}回</div>
+            <div class="analysis-line">代表魚種：${escapeHtml(pattern.fishTop)}</div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function bindAnalysisButtons() {
+    document.getElementById("analyzeBtn")?.addEventListener("click", runLogAnalysis);
+    document.getElementById("similarBtn")?.addEventListener("click", showSimilarLogs);
+    document.getElementById("patternBtn")?.addEventListener("click", showWinPatterns);
+  }
   
   function migrateRecoveredLogsIfNeeded() {
     const currentRaw = localStorage.getItem(PRIMARY_LOG_KEY);
@@ -2403,9 +2558,6 @@
   document.getElementById("saveLogBtn").addEventListener("click", saveLog);
   document.getElementById("clearLogBtn").addEventListener("click", clearLogs);
   document.getElementById("debugStorageBtn").addEventListener("click", inspectStorage);
-  document.getElementById("analyzeBtn").addEventListener("click", runLogAnalysis);
-　document.getElementById("similarBtn").addEventListener("click", showSimilarLogs);
-　document.getElementById("patternBtn").addEventListener("click", showWinPatterns);
 
   initVersionTexts();
   updateSeaNowTitle();
@@ -2413,6 +2565,7 @@
   migrateRecoveredLogsIfNeeded();
   renderLogs();
   renderAll();
+  bindAnalysisButtons();
 // ===== Ver.3.2.4 バックアップ機能 =====
 function exportLogsToText() {
   const logs = getLogs();
