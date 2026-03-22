@@ -562,8 +562,18 @@
 </div>
 
 <script>
-  const APP_VERSION = "3.2";
-  const LOG_KEY = "seiga-funakoshi-log-v241";
+  const APP_VERSION = "3.2.1";
+
+  // 旧版からの救出を優先
+  const PRIMARY_LOG_KEY = "seiga-funakoshi-log-v241";
+  const LOG_KEYS = [
+    "seiga-funakoshi-log-v241",
+    "seiga-funakoshi-log-v300",
+    "seiga-funakoshi-log-v310",
+    "seiga-funakoshi-log-v320",
+    "seiga-funakoshi-log-master"
+  ];
+
   const WATER_TEMP_HISTORY_KEY = "seiga-funakoshi-water-temp-history-v300";
 
   const spotRules = {
@@ -700,14 +710,13 @@
     document.title = `星賀・船越 青物攻略チェックアプリ Ver.${APP_VERSION}`;
     document.getElementById("appTitle").textContent = `星賀・船越 青物攻略チェックアプリ Ver.${APP_VERSION}`;
     document.getElementById("appSub").textContent =
-      `Ver.${APP_VERSION} / 前日予測 / 当日判断 / 1週間おすすめ / 釣れそう度スコア / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 水温昨日比 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正 / 星賀アジ攻略ロジック`;
+      `Ver.${APP_VERSION} / 前日予測 / 当日判断 / 1週間おすすめ / 釣れそう度スコア / 実データ / 風向判定 / 潮位差ロジック / JMA満潮干潮 / 潮名 / 天気 / 風速 / 気温 / 水温昨日比 / 通常カゴ / 遠投ロケットカゴ / 泳がせ / 期待魚種 / 釣果ログ / 簡易AI補正 / 星賀アジ攻略ロジック / ログ救出対応`;
   }
 
   function updateSeaNowTitle() {
     const now = new Date();
     const h = String(now.getHours()).padStart(2,"0");
     const m = String(now.getMinutes()).padStart(2,"0");
-
     const title = document.getElementById("seaNowTitle");
     if (title) {
       title.textContent = `現在の海況判断（現在時刻 ${h}:${m}）`;
@@ -738,16 +747,80 @@
     return `${m}/${day}（${w}）`;
   }
 
-  function getLogs() {
+  // =========================
+  // ログ救出対応
+  // =========================
+  function normalizeLog(log) {
+    const safeSpot = (log?.spot === "hoshiga" || log?.spot === "funakoshi") ? log.spot : "hoshiga";
+    return {
+      date: typeof log?.date === "string" && log.date ? log.date : ymd(),
+      spot: safeSpot,
+      spotName: typeof log?.spotName === "string" && log.spotName ? log.spotName : spotRules[safeSpot].name,
+      timeBand: ["朝","昼","夕","夜"].includes(log?.timeBand) ? log.timeBand : "朝",
+      method: typeof log?.method === "string" && log.method ? log.method : "通常カゴ",
+      result: typeof log?.result === "string" && log.result ? log.result : "不発",
+      fish: typeof log?.fish === "string" ? log.fish : "",
+      memo: typeof log?.memo === "string" ? log.memo : ""
+    };
+  }
+
+  function tryParseLogArray(raw) {
+    if (!raw || typeof raw !== "string") return null;
+
     try {
-      return JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
-    } catch {
-      return [];
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map(normalizeLog);
+      }
+    } catch (e) {}
+
+    try {
+      const repaired = raw
+        .trim()
+        .replace(/,\s*]/g, "]")
+        .replace(/,\s*}/g, "}");
+      const parsed2 = JSON.parse(repaired);
+      if (Array.isArray(parsed2)) {
+        return parsed2.map(normalizeLog);
+      }
+    } catch (e2) {}
+
+    return null;
+  }
+
+  function getLogs() {
+    for (const key of LOG_KEYS) {
+      const raw = localStorage.getItem(key);
+      const logs = tryParseLogArray(raw);
+      if (Array.isArray(logs) && logs.length > 0) {
+        return logs;
+      }
     }
+    return [];
   }
 
   function setLogs(logs) {
-    localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+    const safeLogs = Array.isArray(logs) ? logs.map(normalizeLog) : [];
+    localStorage.setItem(PRIMARY_LOG_KEY, JSON.stringify(safeLogs));
+  }
+
+  function migrateRecoveredLogsIfNeeded() {
+    const currentRaw = localStorage.getItem(PRIMARY_LOG_KEY);
+    const currentLogs = tryParseLogArray(currentRaw);
+
+    if (Array.isArray(currentLogs) && currentLogs.length > 0) {
+      return currentLogs;
+    }
+
+    for (const key of LOG_KEYS) {
+      const raw = localStorage.getItem(key);
+      const recovered = tryParseLogArray(raw);
+      if (Array.isArray(recovered) && recovered.length > 0) {
+        localStorage.setItem(PRIMARY_LOG_KEY, JSON.stringify(recovered));
+        return recovered;
+      }
+    }
+    return [];
   }
 
   function getWaterTempHistory() {
@@ -1989,7 +2062,7 @@
     updateSeaNowTitle();
 
     document.getElementById("statusText").textContent =
-      `${spotRules[spot].name} のおすすめを更新しました。Ver.${APP_VERSION} では現在の海況判断を現在時刻ベースにし、星賀アジ攻略ロジックを追加しています。`;
+      `${spotRules[spot].name} のおすすめを更新しました。Ver.${APP_VERSION} はログ救出対応版です。`;
 
     document.getElementById("liveTide").textContent =
       liveState.tideToday
@@ -2012,7 +2085,7 @@
 
   function saveLog() {
     const spot = document.getElementById("logSpot").value;
-    const log = {
+    const log = normalizeLog({
       date: document.getElementById("logDate").value || ymd(),
       spot,
       spotName: spotRules[spot].name,
@@ -2021,7 +2094,7 @@
       result: document.getElementById("logResult").value,
       fish: document.getElementById("logFish").value.trim(),
       memo: document.getElementById("logMemo").value.trim()
-    };
+    });
 
     const logs = getLogs();
     logs.push(log);
@@ -2036,7 +2109,9 @@
 
   function clearLogs() {
     if (!confirm("全ログを削除しますか？")) return;
-    localStorage.removeItem(LOG_KEY);
+    for (const key of LOG_KEYS) {
+      localStorage.removeItem(key);
+    }
     renderLogs();
     renderAll();
     document.getElementById("statusText").textContent = "全ログを削除しました。";
@@ -2113,7 +2188,7 @@
       saveCurrentWaterTempForToday(spot, liveState.tempCurrent?.value);
 
       document.getElementById("liveDataNote").textContent =
-        `潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。水温欄には、本当に前日のデータがある時だけ昨日比を表示します。Ver.${APP_VERSION} では、現在の海況判断の見出しを現在時刻だけに整理し、時間帯連動の星賀アジ攻略ロジックを追加しています。`;
+        `潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。Ver.${APP_VERSION} はログ救出対応版です。`;
       document.getElementById("statusText").textContent = "実データを更新しました。";
 
       renderAll();
@@ -2132,6 +2207,10 @@
   initVersionTexts();
   updateSeaNowTitle();
   document.getElementById("logDate").value = ymd();
+
+  // 先に旧ログ救出
+  migrateRecoveredLogsIfNeeded();
+
   renderLogs();
   renderAll();
 </script>
