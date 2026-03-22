@@ -573,7 +573,7 @@
 </div>
 
 <script>
-  const APP_VERSION = "3.2.2";
+  const APP_VERSION = "3.2.3";
 
   const PRIMARY_LOG_KEY = "seiga-funakoshi-log-v241";
   const LOG_KEYS = [
@@ -581,7 +581,15 @@
     "seiga-funakoshi-log-v300",
     "seiga-funakoshi-log-v310",
     "seiga-funakoshi-log-v320",
-    "seiga-funakoshi-log-master"
+    "seiga-funakoshi-log-master",
+    "hoshiga-funakoshi-log-v241",
+    "hoshiga-funakoshi-log-v300",
+    "hoshiga-funakoshi-log-v310",
+    "hoshiga-funakoshi-log-v320",
+    "hoshiga-funakoshi-log-master",
+    "seiga-log",
+    "hoshiga-log",
+    "funakoshi-log"
   ];
 
   const WATER_TEMP_HISTORY_KEY = "seiga-funakoshi-water-temp-history-v300";
@@ -758,11 +766,14 @@
   }
 
   function normalizeLog(log) {
-    const safeSpot = (log?.spot === "hoshiga" || log?.spot === "funakoshi") ? log.spot : "hoshiga";
+    const safeSpot = (log?.spot === "hoshiga" || log?.spot === "funakoshi" || log?.spot === "seiga") ? log.spot : "hoshiga";
+    let normalizedSpot = safeSpot;
+    if (normalizedSpot === "seiga") normalizedSpot = "hoshiga";
+
     return {
       date: typeof log?.date === "string" && log.date ? log.date : ymd(),
-      spot: safeSpot,
-      spotName: typeof log?.spotName === "string" && log.spotName ? log.spotName : spotRules[safeSpot].name,
+      spot: normalizedSpot,
+      spotName: typeof log?.spotName === "string" && log.spotName ? log.spotName : spotRules[normalizedSpot]?.name || "星賀漁港",
       timeBand: ["朝","昼","夕","夜"].includes(log?.timeBand) ? log.timeBand : "朝",
       method: typeof log?.method === "string" && log.method ? log.method : "通常カゴ",
       result: typeof log?.result === "string" && log.result ? log.result : "不発",
@@ -782,10 +793,7 @@
     } catch (e) {}
 
     try {
-      const repaired = raw
-        .trim()
-        .replace(/,\s*]/g, "]")
-        .replace(/,\s*}/g, "}");
+      const repaired = raw.trim().replace(/,\s*]/g, "]").replace(/,\s*}/g, "}");
       const parsed2 = JSON.parse(repaired);
       if (Array.isArray(parsed2)) {
         return parsed2.map(normalizeLog);
@@ -803,6 +811,19 @@
         return logs;
       }
     }
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      const raw = localStorage.getItem(key);
+      const logs = tryParseLogArray(raw);
+      if (Array.isArray(logs) && logs.length > 0) {
+        const first = logs[0];
+        if (first && typeof first === "object" && ("spot" in first || "method" in first || "result" in first || "timeBand" in first)) {
+          return logs;
+        }
+      }
+    }
+
     return [];
   }
 
@@ -827,6 +848,20 @@
         return recovered;
       }
     }
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      const raw = localStorage.getItem(key);
+      const recovered = tryParseLogArray(raw);
+      if (Array.isArray(recovered) && recovered.length > 0) {
+        const first = recovered[0];
+        if (first && typeof first === "object" && ("spot" in first || "method" in first || "result" in first || "timeBand" in first)) {
+          localStorage.setItem(PRIMARY_LOG_KEY, JSON.stringify(recovered));
+          return recovered;
+        }
+      }
+    }
+
     return [];
   }
 
@@ -845,16 +880,16 @@
     lines.push(`localStorage件数: ${localStorage.length}`);
     lines.push("");
 
-    const keyList = [];
+    const allKeys = [];
     for (let i = 0; i < localStorage.length; i++) {
-      keyList.push(localStorage.key(i));
+      allKeys.push(localStorage.key(i));
     }
 
     lines.push("【保存キー一覧】");
-    if (keyList.length === 0) {
+    if (allKeys.length === 0) {
       lines.push("なし");
     } else {
-      keyList.forEach((key, idx) => {
+      allKeys.forEach((key, idx) => {
         const raw = localStorage.getItem(key) || "";
         lines.push(`${idx + 1}. ${key} (${raw.length}文字)`);
       });
@@ -862,15 +897,12 @@
 
     lines.push("");
     lines.push("【候補キー診断】");
-
-    const candidates = [PRIMARY_LOG_KEY, ...LOG_KEYS.filter(k => k !== PRIMARY_LOG_KEY)];
-    candidates.forEach((key) => {
+    LOG_KEYS.forEach((key) => {
       const raw = localStorage.getItem(key);
       if (!raw) {
         lines.push(`${key}: なし`);
         return;
       }
-
       const parsed = safeJsonParse(raw);
       if (Array.isArray(parsed)) {
         lines.push(`${key}: 配列 ${parsed.length}件`);
@@ -883,6 +915,51 @@
         lines.push(`${key}: JSON読込不可 / 先頭160文字=${raw.slice(0, 160)}`);
       }
     });
+
+    lines.push("");
+    lines.push("【総当たり診断：log / seiga / hoshiga / funakoshi を含むキー】");
+    const matched = allKeys.filter(key => {
+      const low = String(key).toLowerCase();
+      return low.includes("log") || low.includes("seiga") || low.includes("hoshiga") || low.includes("funakoshi");
+    });
+
+    if (matched.length === 0) {
+      lines.push("該当キーなし");
+    } else {
+      matched.forEach((key) => {
+        const raw = localStorage.getItem(key);
+        const parsed = safeJsonParse(raw);
+        if (Array.isArray(parsed)) {
+          lines.push(`${key}: 配列 ${parsed.length}件`);
+          if (parsed.length > 0) {
+            lines.push(`  先頭例: ${JSON.stringify(parsed[0]).slice(0, 200)}`);
+          }
+        } else if (parsed) {
+          lines.push(`${key}: 配列ではないJSON`);
+        } else {
+          lines.push(`${key}: JSON読込不可 / 先頭200文字=${String(raw).slice(0, 200)}`);
+        }
+      });
+    }
+
+    lines.push("");
+    lines.push("【全キー総当たりで『ログっぽい配列』を探索】");
+    let foundAny = false;
+    allKeys.forEach((key) => {
+      const raw = localStorage.getItem(key);
+      const logs = tryParseLogArray(raw);
+      if (Array.isArray(logs) && logs.length > 0) {
+        const first = logs[0];
+        if (first && typeof first === "object" && ("spot" in first || "method" in first || "result" in first || "timeBand" in first)) {
+          foundAny = true;
+          lines.push(`${key}: ログ候補 ${logs.length}件`);
+          lines.push(`  先頭例: ${JSON.stringify(first).slice(0, 200)}`);
+        }
+      }
+    });
+    if (!foundAny) {
+      lines.push("ログ候補なし");
+    }
 
     document.getElementById("debugStorageBox").textContent = lines.join("\n");
   }
@@ -2126,7 +2203,7 @@
     updateSeaNowTitle();
 
     document.getElementById("statusText").textContent =
-      `${spotRules[spot].name} のおすすめを更新しました。Ver.${APP_VERSION} は保存領域診断対応版です。`;
+      `${spotRules[spot].name} のおすすめを更新しました。Ver.${APP_VERSION} は seiga / hoshiga 総当たり診断版です。`;
 
     document.getElementById("liveTide").textContent =
       liveState.tideToday
@@ -2173,9 +2250,16 @@
 
   function clearLogs() {
     if (!confirm("全ログを削除しますか？")) return;
-    for (const key of LOG_KEYS) {
-      localStorage.removeItem(key);
+    const allKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      allKeys.push(localStorage.key(i));
     }
+    allKeys.forEach(key => {
+      const low = String(key).toLowerCase();
+      if (low.includes("log") || low.includes("seiga") || low.includes("hoshiga") || low.includes("funakoshi")) {
+        localStorage.removeItem(key);
+      }
+    });
     renderLogs();
     renderAll();
     document.getElementById("statusText").textContent = "全ログを削除しました。";
@@ -2253,7 +2337,7 @@
       saveCurrentWaterTempForToday(spot, liveState.tempCurrent?.value);
 
       document.getElementById("liveDataNote").textContent =
-        `潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。Ver.${APP_VERSION} は保存領域診断対応版です。`;
+        `潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得しました。Ver.${APP_VERSION} は seiga / hoshiga 総当たり診断版です。`;
       document.getElementById("statusText").textContent = "実データを更新しました。";
 
       renderAll();
