@@ -7,7 +7,7 @@
 <style>
   :root{
     --bg:#eef3f8;
-    --card:#ffffff;
+    --card:#ffffff;div class
     --text:#1f2937;
     --muted:#6b7280;
     --line:#dbe3ec;
@@ -342,6 +342,28 @@
     .grid2,.grid3,.tri-grid,.guide-grid{grid-template-columns:1fr}
     .score{font-size:28px}
   }
+
+    .analysis-card,
+  .similar-log-item,
+  .pattern-item{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px;
+    background:#fbfcfe;
+    margin-bottom:10px;
+  }
+
+  .analysis-title{
+    font-size:14px;
+    font-weight:800;
+    margin-bottom:6px;
+    color:#1d4ed8;
+  }
+
+  .analysis-line{
+    font-size:14px;
+    line-height:1.8;
+  }
 </style>
 </head>
 <body>
@@ -572,6 +594,17 @@
     <div class="status">保存先はこのブラウザ内です。まずは自分専用ログとして使います。</div>
     <div id="debugStorageBox" class="debug-box small"></div>
     <div style="margin-top:12px;" id="logList"></div>
+  </div>
+  
+    <div class="panel" id="analysisPanel">
+    <h2>釣果ログ分析 Ver.3.3</h2>
+    <div class="row">
+      <button id="analyzeBtn">釣れた条件を分析</button>
+      <button id="similarBtn" class="secondary">今日に近い過去ログ</button>
+      <button id="patternBtn" class="secondary">勝ちパターン</button>
+    </div>
+    <div class="status">釣果ログから再現条件を整理します。</div>
+    <div id="analysisResult" style="margin-top:12px;"></div>
   </div>
 </div>
 
@@ -835,6 +868,20 @@
     localStorage.setItem(PRIMARY_LOG_KEY, JSON.stringify(safeLogs));
   }
 
+  function getCatchCountFromResult(log) { ... }
+
+  function getCurrentAnalysisSource() { ... }
+
+  function runLogAnalysis() { ... }
+
+  function calcLogSimilarity(todayLike, log) { ... }
+
+  function showSimilarLogs() { ... }
+
+  function showWinPatterns() { ... }
+
+  function bindAnalysisButtons() { ... }
+  
   function migrateRecoveredLogsIfNeeded() {
     const currentRaw = localStorage.getItem(PRIMARY_LOG_KEY);
     const currentLogs = tryParseLogArray(currentRaw);
@@ -2356,6 +2403,9 @@
   document.getElementById("saveLogBtn").addEventListener("click", saveLog);
   document.getElementById("clearLogBtn").addEventListener("click", clearLogs);
   document.getElementById("debugStorageBtn").addEventListener("click", inspectStorage);
+  document.getElementById("analyzeBtn").addEventListener("click", runLogAnalysis);
+　document.getElementById("similarBtn").addEventListener("click", showSimilarLogs);
+　document.getElementById("patternBtn").addEventListener("click", showWinPatterns);
 
   initVersionTexts();
   updateSeaNowTitle();
