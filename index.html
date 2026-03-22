@@ -564,6 +564,9 @@
       <button id="saveLogBtn">釣果ログを保存</button>
       <button id="clearLogBtn" class="secondary">全ログ削除</button>
       <button id="debugStorageBtn" class="secondary">保存領域診断</button>
+      <button id="exportLogBtn" class="secondary">📤バックアップ</button>
+      <button id="importLogBtn" class="secondary">📥復元</button>
+<textarea id="backupArea" placeholder="ここにバックアップが表示 / ここに貼り付けて復元"></textarea>
     </div>
 
     <div class="status">保存先はこのブラウザ内です。まずは自分専用ログとして使います。</div>
@@ -2360,6 +2363,32 @@
   migrateRecoveredLogsIfNeeded();
   renderLogs();
   renderAll();
+// ===== Ver.3.2.4 バックアップ機能 =====
+function exportLogsToText() {
+  const logs = getLogs();
+  const text = JSON.stringify(logs, null, 2);
+  document.getElementById("backupArea").value = text;
+  alert("バックアップを表示しました");
+}
+
+function importLogsFromText() {
+  const text = document.getElementById("backupArea").value;
+  try {
+    const data = JSON.parse(text);
+    if (!Array.isArray(data)) {
+      alert("形式エラー");
+      return;
+    }
+    setLogs(data);
+    renderLogs();
+    alert("復元しました");
+  } catch {
+    alert("JSONエラー");
+  }
+}
+
+document.getElementById("exportLogBtn")?.addEventListener("click", exportLogsToText);
+document.getElementById("importLogBtn")?.addEventListener("click", importLogsFromText);
 </script>
 </body>
 </html>
