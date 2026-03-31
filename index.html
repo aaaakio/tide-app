@@ -1846,7 +1846,7 @@ function buildMazumeRangeText(startMinutes, endMinutes) {
   return `${minutesToHm(startMinutes)}〜${minutesToHm(endMinutes)}`;
 }
 
-function buildSunTimes(weatherJson) {
+　function buildSunTimes(weatherJson) {
   const daily = weatherJson?.daily || {};
   const sunriseIso = daily.sunrise?.[0] || null;
   const sunsetIso = daily.sunset?.[0] || null;
@@ -1871,14 +1871,46 @@ function buildSunTimes(weatherJson) {
   };
 }
 
-function scoreFishSpecies(spot, evalResult, tideDay, ai) {
-    if (typeof max === "number" && typeof min === "number") return `${Math.round(max)}℃-${Math.round(min)}℃`;
-    if (typeof max === "number") return `${Math.round(max)}℃`;
-    if (typeof min === "number") return `${Math.round(min)}℃`;
-    return "--℃";
+function getNowMinutes() {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+function judgeMazumeNow(sunTimes) {
+  const nowMin = getNowMinutes();
+
+  const sunriseMin = hmToMinutes(sunTimes?.sunrise);
+  const sunsetMin = hmToMinutes(sunTimes?.sunset);
+
+  if (!Number.isFinite(sunriseMin) || !Number.isFinite(sunsetMin)) {
+    return "未判定";
   }
 
-  function scoreFishSpecies(spot, evalResult, tideDay, ai) {
+  const morningStart = sunriseMin - 60;
+  const morningEnd = sunriseMin + 30;
+  const eveningStart = sunsetMin - 60;
+  const eveningEnd = sunsetMin + 60;
+
+  if (nowMin >= morningStart && nowMin <= morningEnd) {
+    return "朝まずめ中";
+  }
+  if (nowMin >= eveningStart && nowMin <= eveningEnd) {
+    return "夕まずめ中";
+  }
+  if (nowMin < morningStart) {
+    return "朝まずめ前";
+  }
+  if (nowMin > morningEnd && nowMin < eveningStart) {
+    return "まずめ外";
+  }
+  if (nowMin > eveningEnd) {
+    return "まずめ外";
+  }
+
+  return "未判定";
+}
+
+function scoreFishSpecies(spot, evalResult, tideDay, ai) {
     const base = { ...spotRules[spot].fishBase };
 
     if ((tideDay?.range || 0) >= 100) {
