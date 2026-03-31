@@ -427,6 +427,10 @@
         <div class="k">夕まずめ</div>
         <div class="v" id="liveEveningMazume">未計算</div>
       </div>  
+      <div class="stat">
+  <div class="k">現在のまずめ</div>
+  <div class="v" id="liveMazumeNow">未判定</div>
+</div>  
       </div>
     </div>
     <div class="status" id="liveDataNote">潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得します。</div>
@@ -2622,7 +2626,8 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
       document.getElementById("liveSunset").textContent = liveState.sunTimes.sunset;
       document.getElementById("liveMorningMazume").textContent = liveState.sunTimes.morningMazume;
       document.getElementById("liveEveningMazume").textContent = liveState.sunTimes.eveningMazume;
-
+      document.getElementById("liveMazumeNow").textContent = judgeMazumeNow(liveState.sunTimes);
+      
       liveState.tempDiffText = buildWaterTempDiffText(spot, liveState.tempCurrent?.value);
       saveCurrentWaterTempForToday(spot, liveState.tempCurrent?.value);
 
