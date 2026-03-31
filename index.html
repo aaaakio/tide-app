@@ -1877,6 +1877,13 @@ function getNowMinutes() {
 }
 
 function judgeMazumeNow(sunTimes) {
+function getMazumeBonus(sunTimes) {
+  const mazumeNow = judgeMazumeNow(sunTimes);
+
+  if (mazumeNow === "朝まずめ中") return 0.5;
+  if (mazumeNow === "夕まずめ中") return 1.0;
+  return 0;
+}  
   const nowMin = getNowMinutes();
 
   const sunriseMin = hmToMinutes(sunTimes?.sunrise);
