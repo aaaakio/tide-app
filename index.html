@@ -792,7 +792,7 @@
 </div>
 
 <script>
-  const APP_VERSION = "3.4.0";
+  const APP_VERSION = "3.4.1";
 
   const PRIMARY_LOG_KEY = "seiga-funakoshi-log-v241";
   const LOG_KEYS = [
@@ -1100,7 +1100,11 @@
       windDir16: liveState.windCurrent?.dir16 || "",
       windSpeed: Number(liveState.windCurrent?.speed || 0),
       weatherText: liveState.weatherCurrent?.text || "",
-      waterTemp: Number(liveState.tempCurrent?.value || 0)
+      waterTemp: Number(liveState.tempCurrent?.value || 0),
+      position: document.getElementById("logPosition")?.value || "",
+      distance: document.getElementById("logDistance")?.value || "",
+      depth: document.getElementById("logDepth")?.value || "",
+      current: document.getElementById("logCurrent")?.value || ""
     };
   }
 
@@ -1123,6 +1127,17 @@
       .replace(/'/g, "&#39;");
   }
 
+  function countTopFilled(items, fallback = "記録なし") {
+    const filtered = items
+      .map(v => String(v || "").trim())
+      .filter(Boolean);
+    return countTop(filtered.length ? filtered : [fallback]);
+  }
+
+  function compactTopLabel(text) {
+    return String(text || "").replace(/（.*$/, "");
+  }
+
   function runLogAnalysis() {
     const resultBox = document.getElementById("analysisResult");
     const spot = document.getElementById("spotSelect")?.value || "hoshiga";
@@ -1140,9 +1155,13 @@
     }
 
     const spotName = spotRules[spot]?.name || spot;
-    const topTime = countTop(successLogs.map(log => log.timeBand));
-    const topMethod = countTop(successLogs.map(log => log.method));
-    const topFish = countTop(successLogs.map(log => log.fish || "記録なし"));
+    const topTime = countTopFilled(successLogs.map(log => log.timeBand), "時間帯記録なし");
+    const topMethod = countTopFilled(successLogs.map(log => log.method), "釣法記録なし");
+    const topPosition = countTopFilled(successLogs.map(log => log.position), "立ち位置記録なし");
+    const topDistance = countTopFilled(successLogs.map(log => log.distance), "距離記録なし");
+    const topDepth = countTopFilled(successLogs.map(log => log.depth), "タナ記録なし");
+    const topCurrent = countTopFilled(successLogs.map(log => log.current), "潮流記録なし");
+    const topFish = countTopFilled(successLogs.map(log => log.fish || "記録なし"), "魚種記録なし");
     const topMemo = successLogs.map(log => log.memo).filter(Boolean).slice(0, 3);
 
     resultBox.innerHTML = `
@@ -1152,8 +1171,12 @@
         <div class="analysis-line">成功ログ数：${successLogs.length}件 / 全ログ数：${logs.length}件</div>
         <div class="analysis-line">強い時間帯：${escapeHtml(topTime)}</div>
         <div class="analysis-line">強い釣法：${escapeHtml(topMethod)}</div>
+        <div class="analysis-line">強い立ち位置：${escapeHtml(topPosition)}</div>
+        <div class="analysis-line">強い投入距離：${escapeHtml(topDistance)}</div>
+        <div class="analysis-line">強いタナ：${escapeHtml(topDepth)}</div>
+        <div class="analysis-line">強い潮の流れ：${escapeHtml(topCurrent)}</div>
         <div class="analysis-line">目立つ魚種記録：${escapeHtml(topFish)}</div>
-        <div class="analysis-line">一言まとめ：${escapeHtml(spotName)}では「${topTime.replace(/（.*$/,"")} × ${topMethod.replace(/（.*$/,"")}」がまず軸です。</div>
+        <div class="analysis-line">一言まとめ：${escapeHtml(spotName)}では「${escapeHtml(compactTopLabel(topPosition))} × ${escapeHtml(compactTopLabel(topDepth))} × ${escapeHtml(compactTopLabel(topMethod))}」がまず軸です。</div>
         ${topMemo.length ? `<div class="analysis-line">参考メモ：${topMemo.map(escapeHtml).join(" / ")}</div>` : ""}
       </div>
     `;
@@ -1163,14 +1186,19 @@
     let score = 0;
     if (!todayLike || !log) return score;
 
-    if (todayLike.spot && todayLike.spot === log.spot) score += 40;
-    if (todayLike.timeBand && todayLike.timeBand === log.timeBand) score += 25;
+    if (todayLike.spot && todayLike.spot === log.spot) score += 35;
+    if (todayLike.timeBand && todayLike.timeBand === log.timeBand) score += 20;
 
     const heroMethod = String(todayLike.method || "");
-    if (heroMethod.includes(log.method)) score += 20;
+    if (heroMethod.includes(log.method)) score += 18;
 
-    if (todayLike.tideName && todayLike.tideName === (log.tideName || "")) score += 10;
-    if (todayLike.windDir16 && todayLike.windDir16 === (log.windDir16 || "")) score += 5;
+    if (todayLike.tideName && todayLike.tideName === (log.tideName || "")) score += 8;
+    if (todayLike.windDir16 && todayLike.windDir16 === (log.windDir || log.windDir16 || "")) score += 5;
+
+    if (todayLike.position && todayLike.position === (log.position || "")) score += 8;
+    if (todayLike.distance && todayLike.distance === (log.distance || "")) score += 8;
+    if (todayLike.depth && todayLike.depth === (log.depth || "")) score += 8;
+    if (todayLike.current && todayLike.current === (log.current || "")) score += 8;
 
     score += getCatchCountFromResult(log) * 5;
     return score;
@@ -1196,8 +1224,10 @@
         ${logs.map(item => `
           <div class="similar-log-item">
             <div class="analysis-line">一致度：${item.score}点</div>
-            <div class="analysis-line">${escapeHtml(item.log.date)} / ${escapeHtml(spotRules[item.log.spot]?.name || item.log.spot)} / ${escapeHtml(item.log.timeBand)}</div>
+            <div class="analysis-line">${escapeHtml(item.log.date)}${item.log.time ? ` ${escapeHtml(item.log.time)}` : ""} / ${escapeHtml(spotRules[item.log.spot]?.name || item.log.spot)} / ${escapeHtml(item.log.timeBand)}</div>
             <div class="analysis-line">釣法：${escapeHtml(item.log.method)} / 結果：${escapeHtml(item.log.result)}</div>
+            <div class="analysis-line">立ち位置：${escapeHtml(item.log.position || "- ")} / 距離：${escapeHtml(item.log.distance || "- ")} / タナ：${escapeHtml(item.log.depth || "- ")}</div>
+            <div class="analysis-line">潮流：${escapeHtml(item.log.current || "- ")}</div>
             <div class="analysis-line">魚種：${escapeHtml(item.log.fish || "記録なし")}</div>
             <div class="analysis-line">メモ：${escapeHtml(item.log.memo || "- ")}</div>
           </div>
@@ -1218,14 +1248,22 @@
 
     const grouped = {};
     successLogs.forEach(log => {
-      const key = `${log.timeBand} / ${log.method}`;
-      if (!grouped[key]) grouped[key] = { count: 0, fish: [] };
+      const key = `${log.timeBand} / ${log.method} / ${log.position || "位置不明"} / ${log.depth || "タナ不明"}`;
+      if (!grouped[key]) grouped[key] = { count: 0, fish: [], distance: [], current: [] };
       grouped[key].count += 1;
       if (log.fish) grouped[key].fish.push(log.fish);
+      if (log.distance) grouped[key].distance.push(log.distance);
+      if (log.current) grouped[key].current.push(log.current);
     });
 
     const patterns = Object.entries(grouped)
-      .map(([key, value]) => ({ key, count: value.count, fishTop: countTop(value.fish.length ? value.fish : ["記録なし"]) }))
+      .map(([key, value]) => ({
+        key,
+        count: value.count,
+        fishTop: countTopFilled(value.fish, "記録なし"),
+        distanceTop: countTopFilled(value.distance, "距離記録なし"),
+        currentTop: countTopFilled(value.current, "潮流記録なし")
+      }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
@@ -1237,6 +1275,8 @@
             <div class="analysis-line">勝ちパターン${index + 1}：${escapeHtml(pattern.key)}</div>
             <div class="analysis-line">成立回数：${pattern.count}回</div>
             <div class="analysis-line">代表魚種：${escapeHtml(pattern.fishTop)}</div>
+            <div class="analysis-line">強い距離：${escapeHtml(pattern.distanceTop)}</div>
+            <div class="analysis-line">強い潮流：${escapeHtml(pattern.currentTop)}</div>
           </div>
         `).join("")}
       </div>
