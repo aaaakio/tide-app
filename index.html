@@ -364,6 +364,21 @@
     font-size:14px;
     line-height:1.8;
   }
+
+  .log-form-block{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px;
+    background:#fbfcfe;
+    margin-top:12px;
+  }
+  .log-form-block:first-of-type{margin-top:0}
+  .log-form-block h3{margin:0 0 10px;font-size:15px;line-height:1.4}
+  .log-inline-note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:6px}
+  #logPanelV34 textarea,
+  #logPanelV34 input,
+  #logPanelV34 select{width:100%}
+
 </style>
 </head>
 <body>
@@ -550,74 +565,222 @@
     <div class="week-grid" id="weekBox"></div>
   </div>
 
-  <div class="panel">
-    <h2>釣果ログ</h2>
-    <div class="grid3">
-      <div>
-        <label class="small">日付</label>
-        <input type="date" id="logDate" />
-      </div>
-      <div>
-        <label class="small">場所</label>
-        <select id="logSpot">
-          <option value="hoshiga">星賀漁港</option>
-          <option value="funakoshi">船越漁港</option>
-        </select>
-      </div>
-      <div>
-        <label class="small">時間帯</label>
-        <select id="logTimeBand">
-          <option value="朝">朝</option>
-          <option value="昼">昼</option>
-          <option value="夕">夕</option>
-          <option value="夜">夜</option>
-        </select>
-      </div>
-      <div>
-        <label class="small">釣法</label>
-        <select id="logMethod">
-          <option value="通常カゴ">通常カゴ</option>
-          <option value="遠投ロケットカゴ">遠投ロケットカゴ</option>
-          <option value="泳がせ">泳がせ</option>
-          <option value="ルアー">ルアー</option>
-          <option value="餌">餌</option>
-        </select>
-      </div>
-      <div>
-        <label class="small">釣果</label>
-        <select id="logResult">
-          <option value="釣れた">釣れた</option>
-          <option value="反応あり">反応あり</option>
-          <option value="不発">不発</option>
-        </select>
-      </div>
-      <div>
-        <label class="small">サイズ・魚種</label>
-        <input type="text" id="logFish" placeholder="例：ネリゴ 38cm" />
+  <div class="panel" id="logPanelV34">
+    <h2>釣果ログ Ver.3.4</h2>
+    <div class="small">釣行後のまとめ入力でも使いやすいように、選択式中心のログ画面にしました。</div>
+
+    <div class="log-form-block">
+      <h3>1. 基本情報</h3>
+      <div class="grid2">
+        <div>
+          <label class="small">日付</label>
+          <input type="date" id="logDate" />
+        </div>
+        <div>
+          <label class="small">時刻</label>
+          <input type="time" id="logTime" />
+        </div>
+        <div>
+          <label class="small">場所</label>
+          <select id="logSpot">
+            <option value="hoshiga">星賀漁港</option>
+            <option value="funakoshi">船越漁港</option>
+          </select>
+        </div>
+        <div>
+          <label class="small">時間帯</label>
+          <select id="logTimeBand">
+            <option value="">自動判定または選択</option>
+            <option value="朝">朝</option>
+            <option value="昼">昼</option>
+            <option value="夕">夕</option>
+            <option value="夜">夜</option>
+          </select>
+        </div>
       </div>
     </div>
 
-    <div style="margin-top:10px;">
-      <label class="small">メモ</label>
-      <textarea id="logMemo" rows="3" placeholder="ベイト、海面、風、立ち位置など"></textarea>
+    <div class="log-form-block">
+      <h3>2. 実釣条件</h3>
+      <div class="grid2">
+        <div>
+          <label class="small">釣法</label>
+          <select id="logMethod">
+            <option value="通常カゴ">通常カゴ</option>
+            <option value="遠投ロケットカゴ">遠投ロケットカゴ</option>
+            <option value="泳がせ">泳がせ</option>
+            <option value="ルアー">ルアー</option>
+            <option value="餌">餌</option>
+          </select>
+        </div>
+        <div>
+          <label class="small">結果</label>
+          <select id="logResult">
+            <option value="釣れた">釣れた</option>
+            <option value="反応あり">反応あり</option>
+            <option value="不発">不発</option>
+          </select>
+        </div>
+        <div>
+          <label class="small">立ち位置</label>
+          <select id="logPosition">
+            <option value="">選択してください</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="A先端">A先端</option>
+            <option value="B先端">B先端</option>
+            <option value="C港内側">C港内側</option>
+            <option value="その他">その他</option>
+          </select>
+        </div>
+        <div>
+          <label class="small">投入距離</label>
+          <select id="logDistance">
+            <option value="">選択してください</option>
+            <option value="足元">足元</option>
+            <option value="5m">5m</option>
+            <option value="10m">10m</option>
+            <option value="15m">15m</option>
+            <option value="20m">20m</option>
+            <option value="30m以上">30m以上</option>
+          </select>
+        </div>
+        <div>
+          <label class="small">タナ</label>
+          <select id="logDepth">
+            <option value="">選択してください</option>
+            <option value="表層">表層</option>
+            <option value="1〜2m">1〜2m</option>
+            <option value="3〜4m">3〜4m</option>
+            <option value="5〜6m">5〜6m</option>
+            <option value="底付近">底付近</option>
+            <option value="底から1m">底から1m</option>
+            <option value="底から2m">底から2m</option>
+          </select>
+        </div>
+        <div>
+          <label class="small">潮の流れ</label>
+          <select id="logCurrent">
+            <option value="">選択してください</option>
+            <option value="左→右">左→右</option>
+            <option value="右→左">右→左</option>
+            <option value="沖→港内">沖→港内</option>
+            <option value="港内→沖">港内→沖</option>
+            <option value="当て潮">当て潮</option>
+            <option value="払い出し">払い出し</option>
+            <option value="ほぼ止まり">ほぼ止まり</option>
+            <option value="不明">不明</option>
+          </select>
+        </div>
+      </div>
     </div>
 
-    <div class="row" style="margin-top:10px;">
-      <button id="saveLogBtn">釣果ログを保存</button>
-      <button id="clearLogBtn" class="secondary">全ログ削除</button>
-      <button id="debugStorageBtn" class="secondary">保存領域診断</button>
-      <button id="exportLogBtn" class="secondary">📤バックアップ</button>
-      <button id="importLogBtn" class="secondary">📥復元</button>
-<textarea id="backupArea" placeholder="ここにバックアップが表示 / ここに貼り付けて復元"></textarea>
+    <div class="log-form-block">
+      <h3>3. 釣果情報</h3>
+      <div class="grid2">
+        <div>
+          <label class="small">魚種</label>
+          <select id="logFishSpecies">
+            <option value="">選択してください</option>
+            <option value="ネリゴ">ネリゴ</option>
+            <option value="ヤズ">ヤズ</option>
+            <option value="ハマチ">ハマチ</option>
+            <option value="ヒラマサ">ヒラマサ</option>
+            <option value="サゴシ">サゴシ</option>
+            <option value="アジ">アジ</option>
+            <option value="その他">その他</option>
+          </select>
+        </div>
+        <div>
+          <label class="small">サイズ</label>
+          <input type="text" id="logFishSize" placeholder="例：38cm / 40〜45cm" />
+        </div>
+      </div>
     </div>
 
-    <div class="status">保存先はこのブラウザ内です。まずは自分専用ログとして使います。</div>
+    <div class="log-form-block">
+      <h3>4. 自動補完情報</h3>
+      <div class="grid2">
+        <div>
+          <label class="small">日の出</label>
+          <input type="text" id="logAutoSunrise" placeholder="自動補完" readonly />
+        </div>
+        <div>
+          <label class="small">日の入り</label>
+          <input type="text" id="logAutoSunset" placeholder="自動補完" readonly />
+        </div>
+        <div>
+          <label class="small">まずめ状態</label>
+          <input type="text" id="logAutoMazume" placeholder="自動補完" readonly />
+        </div>
+        <div>
+          <label class="small">満潮前後何分</label>
+          <input type="text" id="logAutoHighTideDiff" placeholder="今回は手動/将来自動" readonly />
+        </div>
+        <div>
+          <label class="small">干潮前後何分</label>
+          <input type="text" id="logAutoLowTideDiff" placeholder="今回は手動/将来自動" readonly />
+        </div>
+        <div>
+          <label class="small">潮名</label>
+          <input type="text" id="logAutoTideName" placeholder="自動補完" readonly />
+        </div>
+        <div>
+          <label class="small">潮差</label>
+          <input type="text" id="logAutoTideRange" placeholder="自動補完" readonly />
+        </div>
+        <div>
+          <label class="small">風向</label>
+          <input type="text" id="logAutoWindDir" placeholder="自動補完" readonly />
+        </div>
+        <div>
+          <label class="small">風速</label>
+          <input type="text" id="logAutoWindSpeed" placeholder="自動補完" readonly />
+        </div>
+        <div>
+          <label class="small">気温</label>
+          <input type="text" id="logAutoAirTemp" placeholder="自動補完" readonly />
+        </div>
+        <div>
+          <label class="small">水温</label>
+          <input type="text" id="logAutoWaterTemp" placeholder="自動補完" readonly />
+        </div>
+      </div>
+      <div class="log-inline-note">※ この版では、日の出・日の入り・まずめ・潮名・潮差・風・気温・水温を現在の実データから自動補完します。満潮前後/干潮前後は次段階で自動化します。</div>
+    </div>
+
+    <div class="log-form-block">
+      <h3>5. メモ</h3>
+      <label class="small">自由メモ</label>
+      <textarea id="logMemo" rows="4" placeholder="ベイト、海面の様子、風の体感、周囲の釣れ方、補足など"></textarea>
+    </div>
+
+    <div class="log-form-block">
+      <h3>6. 操作</h3>
+      <div class="row">
+        <button id="fillAutoLogBtn" class="secondary">自動補完を反映</button>
+        <button id="saveLogBtn">釣果ログを保存</button>
+        <button id="clearLogFormBtn" class="secondary">入力クリア</button>
+        <button id="clearLogBtn" class="secondary">全ログ削除</button>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button id="debugStorageBtn" class="secondary">保存領域診断</button>
+        <button id="exportLogBtn" class="secondary">📤バックアップ</button>
+        <button id="importLogBtn" class="secondary">📥復元</button>
+      </div>
+      <div style="margin-top:10px;">
+        <textarea id="backupArea" rows="6" placeholder="ここにバックアップが表示 / ここに貼り付けて復元"></textarea>
+      </div>
+    </div>
+
+    <div class="status">保存先はこのブラウザ内です。Ver.3.4 では「後から見返して再現できる記録」を重視します。</div>
     <div id="debugStorageBox" class="debug-box small"></div>
     <div style="margin-top:12px;" id="logList"></div>
   </div>
   
     <div class="panel" id="analysisPanel">
-    <h2>釣果ログ分析 Ver.3.3</h2>
+    <h2>釣果ログ分析 Ver.3.4</h2>
     <div class="row">
       <button id="analyzeBtn">釣れた条件を分析</button>
       <button id="similarBtn" class="secondary">今日に近い過去ログ</button>
@@ -629,7 +792,7 @@
 </div>
 
 <script>
-  const APP_VERSION = "3.3.1";
+  const APP_VERSION = "3.4.0";
 
   const PRIMARY_LOG_KEY = "seiga-funakoshi-log-v241";
   const LOG_KEYS = [
@@ -832,15 +995,38 @@
     let normalizedSpot = safeSpot;
     if (normalizedSpot === "seiga") normalizedSpot = "hoshiga";
 
+    const fishText = typeof log?.fish === "string" && log.fish
+      ? log.fish
+      : [log?.fishSpecies || "", log?.fishSize || ""].filter(Boolean).join(" ");
+
     return {
       date: typeof log?.date === "string" && log.date ? log.date : ymd(),
+      time: typeof log?.time === "string" ? log.time : "",
       spot: normalizedSpot,
       spotName: typeof log?.spotName === "string" && log.spotName ? log.spotName : spotRules[normalizedSpot]?.name || "星賀漁港",
       timeBand: ["朝","昼","夕","夜"].includes(log?.timeBand) ? log.timeBand : "朝",
       method: typeof log?.method === "string" && log.method ? log.method : "通常カゴ",
       result: typeof log?.result === "string" && log.result ? log.result : "不発",
-      fish: typeof log?.fish === "string" ? log.fish : "",
-      memo: typeof log?.memo === "string" ? log.memo : ""
+      fish: fishText,
+      fishSpecies: typeof log?.fishSpecies === "string" ? log.fishSpecies : "",
+      fishSize: typeof log?.fishSize === "string" ? log.fishSize : "",
+      position: typeof log?.position === "string" ? log.position : "",
+      distance: typeof log?.distance === "string" ? log.distance : "",
+      depth: typeof log?.depth === "string" ? log.depth : "",
+      current: typeof log?.current === "string" ? log.current : "",
+      sunrise: typeof log?.sunrise === "string" ? log.sunrise : "",
+      sunset: typeof log?.sunset === "string" ? log.sunset : "",
+      mazume: typeof log?.mazume === "string" ? log.mazume : "",
+      highTideDiff: typeof log?.highTideDiff === "string" ? log.highTideDiff : "",
+      lowTideDiff: typeof log?.lowTideDiff === "string" ? log.lowTideDiff : "",
+      tideName: typeof log?.tideName === "string" ? log.tideName : "",
+      tideRange: typeof log?.tideRange === "string" ? log.tideRange : "",
+      windDir: typeof log?.windDir === "string" ? log.windDir : "",
+      windSpeed: typeof log?.windSpeed === "string" ? log.windSpeed : "",
+      airTemp: typeof log?.airTemp === "string" ? log.airTemp : "",
+      waterTemp: typeof log?.waterTemp === "string" ? log.waterTemp : "",
+      memo: typeof log?.memo === "string" ? log.memo : "",
+      createdAt: typeof log?.createdAt === "string" ? log.createdAt : ""
     };
   }
 
@@ -2570,31 +2756,122 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
     document.getElementById("logSpot").value = spot;
   }
 
+  function guessTimeBandFromTime(timeValue) {
+    if (!timeValue) return "朝";
+    const hour = Number(String(timeValue).split(":")[0]);
+    if (hour >= 4 && hour < 10) return "朝";
+    if (hour >= 10 && hour < 16) return "昼";
+    if (hour >= 16 && hour < 20) return "夕";
+    return "夜";
+  }
+
+  function fillAutoLogFields() {
+    const sunrise = liveState.sunTimes?.sunrise || "";
+    const sunset = liveState.sunTimes?.sunset || "";
+    const mazume = judgeMazumeNow(liveState.sunTimes || {}) || "";
+    const tideName = liveState.tideToday?.tideName || "";
+    const tideRange = Number.isFinite(Number(liveState.tideToday?.range)) ? `${Number(liveState.tideToday.range)}cm` : "";
+    const windDir = liveState.windCurrent?.dir16 || "";
+    const windSpeed = Number.isFinite(Number(liveState.windCurrent?.speed)) ? `${Number(liveState.windCurrent.speed).toFixed(1)}m/s` : "";
+    const airTemp = Number.isFinite(Number(liveState.airTempCurrent)) ? `${Number(liveState.airTempCurrent).toFixed(1)}℃` : "";
+    const waterTemp = Number.isFinite(Number(liveState.tempCurrent?.value)) ? `${Number(liveState.tempCurrent.value).toFixed(1)}℃` : "";
+
+    document.getElementById("logAutoSunrise").value = sunrise;
+    document.getElementById("logAutoSunset").value = sunset;
+    document.getElementById("logAutoMazume").value = mazume;
+    document.getElementById("logAutoHighTideDiff").value = "";
+    document.getElementById("logAutoLowTideDiff").value = "";
+    document.getElementById("logAutoTideName").value = tideName;
+    document.getElementById("logAutoTideRange").value = tideRange;
+    document.getElementById("logAutoWindDir").value = windDir;
+    document.getElementById("logAutoWindSpeed").value = windSpeed;
+    document.getElementById("logAutoAirTemp").value = airTemp;
+    document.getElementById("logAutoWaterTemp").value = waterTemp;
+
+    document.getElementById("statusText").textContent = "現在の実データをログ入力欄へ反映しました。";
+  }
+
+  function clearLogForm() {
+    document.getElementById("logDate").value = ymd();
+    document.getElementById("logTime").value = "";
+    document.getElementById("logSpot").value = document.getElementById("spotSelect")?.value || "hoshiga";
+    document.getElementById("logTimeBand").value = "";
+    document.getElementById("logMethod").value = "通常カゴ";
+    document.getElementById("logResult").value = "釣れた";
+    document.getElementById("logPosition").value = "";
+    document.getElementById("logDistance").value = "";
+    document.getElementById("logDepth").value = "";
+    document.getElementById("logCurrent").value = "";
+    document.getElementById("logFishSpecies").value = "";
+    document.getElementById("logFishSize").value = "";
+    document.getElementById("logMemo").value = "";
+    document.getElementById("logAutoSunrise").value = "";
+    document.getElementById("logAutoSunset").value = "";
+    document.getElementById("logAutoMazume").value = "";
+    document.getElementById("logAutoHighTideDiff").value = "";
+    document.getElementById("logAutoLowTideDiff").value = "";
+    document.getElementById("logAutoTideName").value = "";
+    document.getElementById("logAutoTideRange").value = "";
+    document.getElementById("logAutoWindDir").value = "";
+    document.getElementById("logAutoWindSpeed").value = "";
+    document.getElementById("logAutoAirTemp").value = "";
+    document.getElementById("logAutoWaterTemp").value = "";
+  }
+
   function saveLog() {
-    const spot = document.getElementById("logSpot").value;
+    const date = document.getElementById("logDate").value || ymd();
+    const time = document.getElementById("logTime").value || "";
+    const spot = document.getElementById("logSpot").value || "hoshiga";
+    const timeBand = document.getElementById("logTimeBand").value || guessTimeBandFromTime(time);
+    const method = document.getElementById("logMethod").value;
+    const result = document.getElementById("logResult").value;
+    const position = document.getElementById("logPosition").value;
+    const distance = document.getElementById("logDistance").value;
+    const depth = document.getElementById("logDepth").value;
+    const current = document.getElementById("logCurrent").value;
+    const fishSpecies = document.getElementById("logFishSpecies").value;
+    const fishSize = document.getElementById("logFishSize").value.trim();
+    const memo = document.getElementById("logMemo").value.trim();
+
+    const sunrise = document.getElementById("logAutoSunrise").value || "";
+    const sunset = document.getElementById("logAutoSunset").value || "";
+    const mazume = document.getElementById("logAutoMazume").value || "";
+    const highTideDiff = document.getElementById("logAutoHighTideDiff").value || "";
+    const lowTideDiff = document.getElementById("logAutoLowTideDiff").value || "";
+    const tideName = document.getElementById("logAutoTideName").value || "";
+    const tideRange = document.getElementById("logAutoTideRange").value || "";
+    const windDir = document.getElementById("logAutoWindDir").value || "";
+    const windSpeed = document.getElementById("logAutoWindSpeed").value || "";
+    const airTemp = document.getElementById("logAutoAirTemp").value || "";
+    const waterTemp = document.getElementById("logAutoWaterTemp").value || "";
+
+    const fish = [fishSpecies, fishSize].filter(Boolean).join(" ");
+
     const log = normalizeLog({
-      date: document.getElementById("logDate").value || ymd(),
-      spot,
-      spotName: spotRules[spot].name,
-      timeBand: document.getElementById("logTimeBand").value,
-      method: document.getElementById("logMethod").value,
-      result: document.getElementById("logResult").value,
-      fish: document.getElementById("logFish").value.trim(),
-      memo: document.getElementById("logMemo").value.trim()
+      date, time, spot,
+      spotName: spotRules[spot]?.name || "星賀漁港",
+      timeBand, method, result,
+      position, distance, depth, current,
+      fishSpecies, fishSize, fish,
+      sunrise, sunset, mazume,
+      highTideDiff, lowTideDiff,
+      tideName, tideRange,
+      windDir, windSpeed, airTemp, waterTemp,
+      memo,
+      createdAt: new Date().toISOString()
     });
 
     const logs = getLogs();
     logs.push(log);
     setLogs(logs);
 
-    document.getElementById("logFish").value = "";
-    document.getElementById("logMemo").value = "";
     renderLogs();
     renderAll();
     document.getElementById("statusText").textContent = "釣果ログを保存しました。";
+    alert("釣果ログを保存しました");
   }
 
-  function clearLogs() {
+  function clearLogs() { {
     if (!confirm("全ログを削除しますか？")) return;
     const allKeys = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -2630,17 +2907,29 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
       return;
     }
 
-    box.innerHTML = logs.slice().reverse().map((log, idx) => `
+    box.innerHTML = logs.slice().reverse().map((log, idx) => {
+      const lines = [];
+      lines.push(`釣法：${log.method} / 結果：${log.result}`);
+      if (log.position) lines.push(`立ち位置：${log.position}`);
+      if (log.distance) lines.push(`投入距離：${log.distance}`);
+      if (log.depth) lines.push(`タナ：${log.depth}`);
+      if (log.current) lines.push(`潮の流れ：${log.current}`);
+      if (log.mazume) lines.push(`まずめ：${log.mazume}`);
+      if (log.tideName || log.tideRange) lines.push(`潮：${[log.tideName, log.tideRange].filter(Boolean).join(" / ")}`);
+      if (log.windDir || log.windSpeed) lines.push(`風：${[log.windDir, log.windSpeed].filter(Boolean).join(" / ")}`);
+      if (log.airTemp || log.waterTemp) lines.push(`温度：${[log.airTemp && `気温 ${log.airTemp}`, log.waterTemp && `水温 ${log.waterTemp}`].filter(Boolean).join(" / ")}`);
+
+      return `
       <div class="log-item">
         <div class="log-head">
-          <div class="log-title">${log.date} / ${log.spotName} / ${log.timeBand}</div>
+          <div class="log-title">${log.date}${log.time ? ` ${log.time}` : ""} / ${log.spotName} / ${log.timeBand}</div>
           <button class="danger" onclick="deleteLog(${logs.length - 1 - idx})">削除</button>
         </div>
-        <div class="small">釣法：${log.method} / 結果：${log.result}</div>
+        <div class="small">${lines.join("<br>")}</div>
         <div class="bullet">${log.fish || "魚種・サイズ未入力"}</div>
         <div class="small">${log.memo || "メモなし"}</div>
-      </div>
-    `).join("");
+      </div>`;
+    }).join("");
   }
 
   window.deleteLog = deleteLog;
@@ -2707,9 +2996,12 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
   document.getElementById("saveLogBtn").addEventListener("click", saveLog);
   document.getElementById("clearLogBtn").addEventListener("click", clearLogs);
   document.getElementById("debugStorageBtn").addEventListener("click", inspectStorage);
+  document.getElementById("fillAutoLogBtn").addEventListener("click", fillAutoLogFields);
+  document.getElementById("clearLogFormBtn").addEventListener("click", clearLogForm);
 
   initVersionTexts();
   updateSeaNowTitle();
+  clearLogForm();
   document.getElementById("logDate").value = ymd();
   migrateRecoveredLogsIfNeeded();
   renderLogs();
