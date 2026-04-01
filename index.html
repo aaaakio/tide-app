@@ -1007,20 +1007,54 @@
   }
 
   function normalizeLog(log) {
-    const safeSpot = (log?.spot === "hoshiga" || log?.spot === "funakoshi" || log?.spot === "seiga") ? log.spot : "hoshiga";
-    let normalizedSpot = safeSpot;
-    if (normalizedSpot === "seiga") normalizedSpot = "hoshiga";
+  const safeSpot = (log?.spot === "hoshiga" || log?.spot === "funakoshi" || log?.spot === "seiga")
+    ? log.spot
+    : "hoshiga";
 
-    return {
-      date: typeof log?.date === "string" && log.date ? log.date : ymd(),
-      spot: normalizedSpot,
-      spotName: typeof log?.spotName === "string" && log.spotName ? log.spotName : spotRules[normalizedSpot]?.name || "星賀漁港",
-      timeBand: ["朝","昼","夕","夜"].includes(log?.timeBand) ? log.timeBand : "朝",
-      method: typeof log?.method === "string" && log.method ? log.method : "通常カゴ",
-      result: typeof log?.result === "string" && log.result ? log.result : "不発",
-      fish: typeof log?.fish === "string" ? log.fish : "",
-      memo: typeof log?.memo === "string" ? log.memo : ""
-    };
+  let normalizedSpot = safeSpot;
+  if (normalizedSpot === "seiga") normalizedSpot = "hoshiga";
+
+  const fishTextFromOld =
+    typeof log?.fish === "string" ? log.fish : "";
+
+  return {
+    // 旧互換
+    date: typeof log?.date === "string" && log.date ? log.date : ymd(),
+    spot: normalizedSpot,
+    spotName: typeof log?.spotName === "string" && log.spotName
+      ? log.spotName
+      : spotRules[normalizedSpot]?.name || "星賀漁港",
+    timeBand: ["朝","昼","夕","夜"].includes(log?.timeBand) ? log.timeBand : "朝",
+    method: typeof log?.method === "string" && log.method ? log.method : "通常カゴ",
+    result: typeof log?.result === "string" && log.result ? log.result : "不発",
+    fish: fishTextFromOld,
+    memo: typeof log?.memo === "string" ? log.memo : "",
+
+    // Ver.3.4 追加
+    time: typeof log?.time === "string" ? log.time : "",
+    position: typeof log?.position === "string" ? log.position : "",
+    distance: typeof log?.distance === "string" ? log.distance : "",
+    depth: typeof log?.depth === "string" ? log.depth : "",
+    current: typeof log?.current === "string" ? log.current : "",
+
+    fishSpecies: typeof log?.fishSpecies === "string" ? log.fishSpecies : "",
+    fishSize: typeof log?.fishSize === "string" ? log.fishSize : "",
+
+    sunrise: typeof log?.sunrise === "string" ? log.sunrise : "",
+    sunset: typeof log?.sunset === "string" ? log.sunset : "",
+    mazume: typeof log?.mazume === "string" ? log.mazume : "",
+    highTideDiff: typeof log?.highTideDiff === "string" ? log.highTideDiff : "",
+    lowTideDiff: typeof log?.lowTideDiff === "string" ? log.lowTideDiff : "",
+    tideName: typeof log?.tideName === "string" ? log.tideName : "",
+    tideRange: typeof log?.tideRange === "string" ? log.tideRange : "",
+    windDir: typeof log?.windDir === "string" ? log.windDir : "",
+    windSpeed: typeof log?.windSpeed === "string" ? log.windSpeed : "",
+    airTemp: typeof log?.airTemp === "string" ? log.airTemp : "",
+    waterTemp: typeof log?.waterTemp === "string" ? log.waterTemp : "",
+
+    createdAt: typeof log?.createdAt === "string" ? log.createdAt : ""
+  };
+}
   }
 
   function tryParseLogArray(raw) {
@@ -2749,18 +2783,93 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
     document.getElementById("logSpot").value = spot;
   }
 
-  function saveLog() {
-    const spot = document.getElementById("logSpot").value;
-    const log = normalizeLog({
-      date: document.getElementById("logDate").value || ymd(),
-      spot,
-      spotName: spotRules[spot].name,
-      timeBand: document.getElementById("logTimeBand").value,
-      method: document.getElementById("logMethod").value,
-      result: document.getElementById("logResult").value,
-      fish: document.getElementById("logFish").value.trim(),
-      memo: document.getElementById("logMemo").value.trim()
-    });
+ function saveLog() {
+  const date = document.getElementById("logDate")?.value || ymd();
+  const time = document.getElementById("logTime")?.value || "";
+  const spot = document.getElementById("logSpot")?.value || "hoshiga";
+  const timeBandRaw = document.getElementById("logTimeBand")?.value || "";
+
+  const method = document.getElementById("logMethod")?.value || "通常カゴ";
+  const result = document.getElementById("logResult")?.value || "不発";
+  const position = document.getElementById("logPosition")?.value || "";
+  const distance = document.getElementById("logDistance")?.value || "";
+  const depth = document.getElementById("logDepth")?.value || "";
+  const current = document.getElementById("logCurrent")?.value || "";
+
+  const fishSpecies = document.getElementById("logFishSpecies")?.value || "";
+  const fishSize = document.getElementById("logFishSize")?.value || "";
+
+  const sunrise = document.getElementById("logAutoSunrise")?.value || "";
+  const sunset = document.getElementById("logAutoSunset")?.value || "";
+  const mazume = document.getElementById("logAutoMazume")?.value || "";
+  const highTideDiff = document.getElementById("logAutoHighTideDiff")?.value || "";
+  const lowTideDiff = document.getElementById("logAutoLowTideDiff")?.value || "";
+  const tideName = document.getElementById("logAutoTideName")?.value || "";
+  const tideRange = document.getElementById("logAutoTideRange")?.value || "";
+  const windDir = document.getElementById("logAutoWindDir")?.value || "";
+  const windSpeed = document.getElementById("logAutoWindSpeed")?.value || "";
+  const airTemp = document.getElementById("logAutoAirTemp")?.value || "";
+  const waterTemp = document.getElementById("logAutoWaterTemp")?.value || "";
+
+  const memo = document.getElementById("logMemo")?.value || "";
+
+  let timeBand = timeBandRaw;
+  if (!timeBand) {
+    if (time) {
+      const hour = Number(time.split(":")[0]);
+      if (hour >= 4 && hour < 10) timeBand = "朝";
+      else if (hour >= 10 && hour < 16) timeBand = "昼";
+      else if (hour >= 16 && hour < 20) timeBand = "夕";
+      else timeBand = "夜";
+    } else {
+      timeBand = "朝";
+    }
+  }
+
+  const fish = [fishSpecies, fishSize].filter(Boolean).join(" ");
+
+  const log = normalizeLog({
+    date,
+    time,
+    spot,
+    spotName: spotRules[spot]?.name || "星賀漁港",
+    timeBand,
+    method,
+    result,
+    position,
+    distance,
+    depth,
+    current,
+    fishSpecies,
+    fishSize,
+    fish,
+    sunrise,
+    sunset,
+    mazume,
+    highTideDiff,
+    lowTideDiff,
+    tideName,
+    tideRange,
+    windDir,
+    windSpeed,
+    airTemp,
+    waterTemp,
+    memo,
+    createdAt: new Date().toISOString()
+  });
+
+  const logs = getLogs();
+  logs.unshift(log);
+  setLogs(logs);
+
+  renderLogs();
+
+  if (typeof runLogAnalysis === "function") {
+    runLogAnalysis();
+  }
+
+  alert("釣果ログを保存しました");
+}
 
     const logs = getLogs();
     logs.push(log);
