@@ -68,17 +68,58 @@
   .hero{
     background:linear-gradient(135deg,var(--primary),var(--primary2));
     color:#fff;
-    position:sticky;
-    top:0;
-    z-index:10;
+    position:relative;
+    padding:12px 14px;
   }
   .hero .small{
     color:rgba(255,255,255,0.84);
   }
-  .score{
-    font-size:30px;
+  .hero h2{
+    margin:0 0 8px;
+    font-size:19px;
+  }
+  .hero-main{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:6px;
+  }
+  .hero-score-inline{
+    font-size:20px;
     font-weight:800;
-    margin:6px 0 10px;
+    letter-spacing:1px;
+    line-height:1;
+  }
+  .hero-summary{
+    font-size:15px;
+    font-weight:700;
+    line-height:1.5;
+    margin-top:2px;
+  }
+  .hero-details{
+    margin-top:8px;
+    border-top:1px solid rgba(255,255,255,0.18);
+    padding-top:8px;
+  }
+  .hero-details summary{
+    cursor:pointer;
+    font-size:13px;
+    font-weight:700;
+    color:rgba(255,255,255,0.92);
+    list-style:none;
+  }
+  .hero-details summary::-webkit-details-marker{display:none}
+  .hero-details summary::before{content:"▼ ";font-size:11px}
+  .hero-details[open] summary::before{content:"▲ ";}
+  .hero-details-body{
+    margin-top:8px;
+  }
+
+  .score{
+    font-size:22px;
+    font-weight:800;
+    margin:4px 0 6px;
     letter-spacing:1px;
   }
   .label{
@@ -464,11 +505,18 @@
 
   <div class="panel hero">
     <h2>今日の結論</h2>
-    <div id="heroLabel" class="label">短時間様子見</div>
-    <div id="heroScore" class="score">★★★☆☆</div>
-    <div id="heroMethod" class="meta">おすすめ：通常カゴ → 泳がせ</div>
-    <div id="heroComment" class="meta">風・潮位差を反映して判定しています。</div>
-    <div class="small" id="heroNote">星賀・船越ごとの風向補正を反映しています。</div>
+    <div class="hero-main">
+      <div id="heroLabel" class="label">短時間様子見</div>
+      <div id="heroScore" class="hero-score-inline">★★★☆☆</div>
+    </div>
+    <div id="heroMethod" class="hero-summary">おすすめ：通常カゴ → 泳がせ</div>
+    <details class="hero-details">
+      <summary>詳細を見る</summary>
+      <div class="hero-details-body">
+        <div id="heroComment" class="meta">風・潮位差を反映して判定しています。</div>
+        <div class="small" id="heroNote">星賀・船越ごとの風向補正を反映しています。</div>
+      </div>
+    </details>
   </div>
 
   <div class="panel">
