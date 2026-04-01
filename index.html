@@ -2928,17 +2928,45 @@ function exportLogsToText() {
 
 function importLogsFromText() {
   const text = document.getElementById("backupArea").value;
+
+  if (!text || !text.trim()) {
+    alert("backupArea が空です");
+    return;
+  }
+
   try {
     const data = JSON.parse(text);
-    if (!Array.isArray(data)) {
-      alert("形式エラー");
+    let logs = null;
+
+    // 旧形式: 配列そのもの
+    if (Array.isArray(data)) {
+      logs = data;
+    }
+    // 新形式: { app, version, exportedAt, count, logs: [...] }
+    else if (data && Array.isArray(data.logs)) {
+      logs = data.logs;
+    }
+
+    if (!Array.isArray(logs)) {
+      alert("復元できる形式ではありません");
       return;
     }
-    setLogs(data);
+
+    if (!confirm(`このバックアップで復元しますか？\n件数: ${logs.length}件`)) {
+      return;
+    }
+
+    setLogs(logs);
     renderLogs();
-    alert("復元しました");
-  } catch {
-    alert("JSONエラー");
+
+    if (typeof runLogAnalysis === "function") {
+      runLogAnalysis();
+    }
+
+    alert(`復元しました\n件数: ${logs.length}件`);
+  } catch (e) {
+    alert("JSONエラー：バックアップ文字列を確認してください");
+    console.error(e);
   }
 }
 
