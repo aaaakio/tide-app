@@ -249,7 +249,82 @@
     align-items:center;
   }
   .log-title{
+    font-weight:800;
+    font-size:18px;
+    line-height:1.4;
+  }
+  .log-item{
+    border:1px solid #d7e0ea;
+    border-radius:18px;
+    padding:14px;
+    background:#ffffff;
+    margin-bottom:12px;
+    box-shadow:0 3px 12px rgba(15,23,42,0.05);
+  }
+  .log-head{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+    align-items:flex-start;
+  }
+  .log-detail-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+    margin:10px 0;
+  }
+  .log-chip{
+    border:1px solid #dbe3ec;
+    border-radius:12px;
+    padding:8px 10px;
+    background:#f8fbff;
+    font-size:14px;
+    line-height:1.5;
+  }
+  .log-chip b{
+    display:block;
+    font-size:12px;
+    color:var(--muted);
     font-weight:700;
+    margin-bottom:2px;
+  }
+  .log-main-fish{
+    margin-top:10px;
+    font-size:18px;
+    font-weight:800;
+    line-height:1.5;
+  }
+  .log-memo-box{
+    margin-top:8px;
+    padding:10px 12px;
+    border-radius:12px;
+    background:#f8fafc;
+    border:1px dashed #cbd5e1;
+    font-size:14px;
+    line-height:1.7;
+  }
+  .analysis-card,
+  .similar-log-item,
+  .pattern-item{
+    border:1px solid #d7e0ea;
+    border-radius:18px;
+    padding:14px;
+    background:#ffffff;
+    margin-bottom:12px;
+    box-shadow:0 3px 12px rgba(15,23,42,0.05);
+  }
+  .analysis-title{
+    font-size:18px;
+    font-weight:800;
+    margin-bottom:10px;
+    color:#1d4ed8;
+  }
+  #backupArea{
+    min-height:220px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    line-height:1.5;
+    white-space:pre;
   }
   .ai-box{
     border:1px solid #c7d2fe;
@@ -339,8 +414,9 @@
   }
 
   @media (max-width:700px){
-    .grid2,.grid3,.tri-grid,.guide-grid{grid-template-columns:1fr}
+    .grid2,.grid3,.tri-grid,.guide-grid,.log-detail-grid{grid-template-columns:1fr}
     .score{font-size:28px}
+    .log-title{font-size:16px}
   }
 
     .analysis-card,
@@ -791,7 +867,7 @@
         <button id="importLogBtn" class="secondary">📥復元</button>
       </div>
       <div style="margin-top:10px;">
-        <textarea id="backupArea" rows="6" placeholder="ここにバックアップが表示 / ここに貼り付けて復元"></textarea>
+        <textarea id="backupArea" rows="10" placeholder="ここにバックアップが表示 / ここに貼り付けて復元"></textarea>
       </div>
     </div>
 
@@ -3048,28 +3124,28 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
     }
 
     box.innerHTML = logs.slice().reverse().map((log, idx) => {
-      const lines = [];
-      lines.push(`釣法：${log.method} / 結果：${log.result}`);
-      if (log.position) lines.push(`立ち位置：${log.position}`);
-      if (log.distance) lines.push(`投入距離：${log.distance}`);
-      if (log.depth) lines.push(`タナ：${log.depth}`);
-      if (log.current) lines.push(`潮の流れ：${log.current}`);
-      if (log.targetGroup) lines.push(`対象魚種：${log.targetGroup}`);
-      if (log.baitStatus) lines.push(`ベイト状況：${log.baitStatus}`);
-      if (log.mazume) lines.push(`まずめ：${log.mazume}`);
-      if (log.tideName || log.tideRange) lines.push(`潮：${[log.tideName, log.tideRange].filter(Boolean).join(" / ")}`);
-      if (log.windDir || log.windSpeed) lines.push(`風：${[log.windDir, log.windSpeed].filter(Boolean).join(" / ")}`);
-      if (log.airTemp || log.waterTemp) lines.push(`温度：${[log.airTemp && `気温 ${log.airTemp}`, log.waterTemp && `水温 ${log.waterTemp}`].filter(Boolean).join(" / ")}`);
+      const chips = [];
+      if (log.method || log.result) chips.push(`<div class="log-chip"><b>釣法 / 結果</b>${escapeHtml([log.method, log.result].filter(Boolean).join(" / "))}</div>`);
+      if (log.position) chips.push(`<div class="log-chip"><b>立ち位置</b>${escapeHtml(log.position)}</div>`);
+      if (log.distance) chips.push(`<div class="log-chip"><b>投入距離</b>${escapeHtml(log.distance)}</div>`);
+      if (log.depth) chips.push(`<div class="log-chip"><b>タナ</b>${escapeHtml(log.depth)}</div>`);
+      if (log.current) chips.push(`<div class="log-chip"><b>潮の流れ</b>${escapeHtml(log.current)}</div>`);
+      if (log.targetGroup) chips.push(`<div class="log-chip"><b>対象魚種</b>${escapeHtml(log.targetGroup)}</div>`);
+      if (log.baitStatus) chips.push(`<div class="log-chip"><b>ベイト状況</b>${escapeHtml(log.baitStatus)}</div>`);
+      if (log.mazume) chips.push(`<div class="log-chip"><b>まずめ</b>${escapeHtml(log.mazume)}</div>`);
+      if (log.tideName || log.tideRange) chips.push(`<div class="log-chip"><b>潮</b>${escapeHtml([log.tideName, log.tideRange].filter(Boolean).join(" / "))}</div>`);
+      if (log.windDir || log.windSpeed) chips.push(`<div class="log-chip"><b>風</b>${escapeHtml([log.windDir, log.windSpeed].filter(Boolean).join(" / "))}</div>`);
+      if (log.airTemp || log.waterTemp) chips.push(`<div class="log-chip"><b>温度</b>${escapeHtml([log.airTemp && `気温 ${log.airTemp}`, log.waterTemp && `水温 ${log.waterTemp}`].filter(Boolean).join(" / "))}</div>`);
 
       return `
       <div class="log-item">
         <div class="log-head">
-          <div class="log-title">${log.date}${log.time ? ` ${log.time}` : ""} / ${log.spotName} / ${log.timeBand}</div>
+          <div class="log-title">${escapeHtml(log.date)}${log.time ? ` ${escapeHtml(log.time)}` : ""} / ${escapeHtml(log.spotName)} / ${escapeHtml(log.timeBand)}</div>
           <button class="danger" onclick="deleteLog(${logs.length - 1 - idx})">削除</button>
         </div>
-        <div class="small">${lines.join("<br>")}</div>
-        <div class="bullet">${log.fish || "魚種・サイズ未入力"}</div>
-        <div class="small">${log.memo || "メモなし"}</div>
+        <div class="log-detail-grid">${chips.join("")}</div>
+        <div class="log-main-fish">${escapeHtml(log.fish || "魚種・サイズ未入力")}</div>
+        <div class="log-memo-box">${escapeHtml(log.memo || "メモなし")}</div>
       </div>`;
     }).join("");
   }
