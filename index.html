@@ -2765,22 +2765,80 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
     return "夜";
   }
 
+  function formatDiffMinutes(targetMin, baseMin) {
+    if (targetMin == null || baseMin == null) return "";
+    const diff = targetMin - baseMin;
+    if (diff === 0) return "ちょうど";
+    return diff > 0 ? `${diff}分前` : `${Math.abs(diff)}分後`;
+  }
+
+  function getNearestTideDiffText(eventList, baseMin) {
+    if (!Array.isArray(eventList) || !eventList.length || baseMin == null) return "";
+    const minutes = eventList
+      .map(v => hhmmToMinutes(v.time))
+      .filter(v => v != null);
+    if (!minutes.length) return "";
+    let nearest = minutes[0];
+    let nearestAbs = Math.abs(minutes[0] - baseMin);
+    for (const m of minutes.slice(1)) {
+      const a = Math.abs(m - baseMin);
+      if (a < nearestAbs) {
+        nearest = m;
+        nearestAbs = a;
+      }
+    }
+    return formatDiffMinutes(nearest, baseMin);
+  }
+
+  function judgeMazumeAtTime(sunTimes, timeValue) {
+    if (!sunTimes || !timeValue) return "";
+    const nowMin = hhmmToMinutes(timeValue);
+    const sunrise = hhmmToMinutes(sunTimes.sunrise);
+    const sunset = hhmmToMinutes(sunTimes.sunset);
+    if (nowMin == null || sunrise == null || sunset == null) return "";
+
+    const morningStart = sunrise - 60;
+    const morningEnd = sunrise + 30;
+    const eveningStart = sunset - 60;
+    const eveningEnd = sunset + 60;
+
+    if (nowMin >= morningStart && nowMin <= morningEnd) return "朝まずめ";
+    if (nowMin >= eveningStart && nowMin <= eveningEnd) return "夕まずめ";
+    return "まずめ外";
+  }
+
+  function findTideDayForLogDate(logDate) {
+    if (!logDate) return liveState.tideToday || null;
+    return liveState.tideWeek.find(day => day.date === logDate) || liveState.tideToday || null;
+  }
+
   function fillAutoLogFields() {
-    const sunrise = liveState.sunTimes?.sunrise || "";
-    const sunset = liveState.sunTimes?.sunset || "";
-    const mazume = judgeMazumeNow(liveState.sunTimes || {}) || "";
-    const tideName = liveState.tideToday?.tideName || "";
-    const tideRange = Number.isFinite(Number(liveState.tideToday?.range)) ? `${Number(liveState.tideToday.range)}cm` : "";
+    const logDate = document.getElementById("logDate")?.value || ymd();
+    const logTime = document.getElementById("logTime")?.value || "";
+    const tideDay = findTideDayForLogDate(logDate);
+    const sunSource = {
+      sunrise: liveState.sunTimes?.sunrise || "",
+      sunset: liveState.sunTimes?.sunset || ""
+    };
+
+    const sunrise = sunSource.sunrise || "";
+    const sunset = sunSource.sunset || "";
+    const mazume = logTime ? judgeMazumeAtTime(sunSource, logTime) : (judgeMazumeNow(liveState.sunTimes || {}) || "");
+    const tideName = tideDay?.tideName || "";
+    const tideRange = Number.isFinite(Number(tideDay?.range)) ? `${Number(tideDay.range)}cm` : "";
     const windDir = liveState.windCurrent?.dir16 || "";
     const windSpeed = Number.isFinite(Number(liveState.windCurrent?.speed)) ? `${Number(liveState.windCurrent.speed).toFixed(1)}m/s` : "";
     const airTemp = Number.isFinite(Number(liveState.airTempCurrent)) ? `${Number(liveState.airTempCurrent).toFixed(1)}℃` : "";
     const waterTemp = Number.isFinite(Number(liveState.tempCurrent?.value)) ? `${Number(liveState.tempCurrent.value).toFixed(1)}℃` : "";
+    const baseMin = hhmmToMinutes(logTime);
+    const highDiff = logTime ? getNearestTideDiffText(tideDay?.highs || [], baseMin) : "";
+    const lowDiff = logTime ? getNearestTideDiffText(tideDay?.lows || [], baseMin) : "";
 
     document.getElementById("logAutoSunrise").value = sunrise;
     document.getElementById("logAutoSunset").value = sunset;
     document.getElementById("logAutoMazume").value = mazume;
-    document.getElementById("logAutoHighTideDiff").value = "";
-    document.getElementById("logAutoLowTideDiff").value = "";
+    document.getElementById("logAutoHighTideDiff").value = highDiff;
+    document.getElementById("logAutoLowTideDiff").value = lowDiff;
     document.getElementById("logAutoTideName").value = tideName;
     document.getElementById("logAutoTideRange").value = tideRange;
     document.getElementById("logAutoWindDir").value = windDir;
@@ -2788,7 +2846,10 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
     document.getElementById("logAutoAirTemp").value = airTemp;
     document.getElementById("logAutoWaterTemp").value = waterTemp;
 
-    document.getElementById("statusText").textContent = "現在の実データをログ入力欄へ反映しました。";
+    const msg = logTime
+      ? `自動補完を反映しました（${logDate} ${logTime} 基準）`
+      : `自動補完を反映しました（${logDate} 基準。時刻未入力のため潮時差は空欄）`;
+    document.getElementById("statusText").textContent = msg;
   }
 
   function clearLogForm() {
