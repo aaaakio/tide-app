@@ -2871,18 +2871,7 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
   alert("釣果ログを保存しました");
 }
 
-    const logs = getLogs();
-    logs.push(log);
-    setLogs(logs);
-
-    document.getElementById("logFish").value = "";
-    document.getElementById("logMemo").value = "";
-    renderLogs();
-    renderAll();
-    document.getElementById("statusText").textContent = "釣果ログを保存しました。";
-  }
-
-  function clearLogs() {
+    function clearLogs() {
     if (!confirm("全ログを削除しますか？")) return;
     const allKeys = [];
     for (let i = 0; i < localStorage.length; i++) {
