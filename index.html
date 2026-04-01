@@ -1877,6 +1877,7 @@ function getNowMinutes() {
 }
 
 function judgeMazumeNow(sunTimes) {
+  //
 function getMazumeBonus(sunTimes) {
   const mazumeNow = judgeMazumeNow(sunTimes);
 
@@ -2379,6 +2380,20 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
       timeBand
     });
 
+const mazumeBonus = getMazumeBonus(liveState.sunTimes);
+result.overall.score += mazumeBonus;
+
+result.overall.stars = scoreToStars(result.overall.score);
+result.overall.starText = makeStarText(result.overall.stars);
+
+const mazumeLabelObj = scoreToOverallLabel(result.overall.score);
+result.overall.label = mazumeLabelObj.text;
+result.overall.cls = mazumeLabelObj.cls;
+
+if (mazumeBonus > 0) {
+  result.comments.unshift(`まずめ補正 +${mazumeBonus}`);
+}
+    
     if (applyTideTiming) {
       const tideTiming = getTideTimingBonus(spot, tideDay);
       result.overall.score += tideTiming.bonus;
