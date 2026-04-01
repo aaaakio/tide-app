@@ -689,12 +689,33 @@
             <option value="ヒラマサ">ヒラマサ</option>
             <option value="サゴシ">サゴシ</option>
             <option value="アジ">アジ</option>
+            <option value="アオリイカ">アオリイカ</option>
+            <option value="根魚">根魚</option>
             <option value="その他">その他</option>
           </select>
         </div>
         <div>
           <label class="small">サイズ</label>
           <input type="text" id="logFishSize" placeholder="例：38cm / 40〜45cm" />
+        </div>
+        <div>
+          <label class="small">対象魚種</label>
+          <select id="logTargetGroup">
+            <option value="">選択してください</option>
+            <option value="青物">青物</option>
+            <option value="アジ">アジ</option>
+            <option value="アオリイカ">アオリイカ</option>
+            <option value="根魚">根魚</option>
+          </select>
+        </div>
+        <div>
+          <label class="small">ベイト状況</label>
+          <select id="logBaitStatus">
+            <option value="">選択してください</option>
+            <option value="あり">あり</option>
+            <option value="少ない">少ない</option>
+            <option value="なし">なし</option>
+          </select>
         </div>
       </div>
     </div>
@@ -1014,6 +1035,8 @@
       distance: typeof log?.distance === "string" ? log.distance : "",
       depth: typeof log?.depth === "string" ? log.depth : "",
       current: typeof log?.current === "string" ? log.current : "",
+      targetGroup: typeof log?.targetGroup === "string" ? log.targetGroup : "",
+      baitStatus: typeof log?.baitStatus === "string" ? log.baitStatus : "",
       sunrise: typeof log?.sunrise === "string" ? log.sunrise : "",
       sunset: typeof log?.sunset === "string" ? log.sunset : "",
       mazume: typeof log?.mazume === "string" ? log.mazume : "",
@@ -1104,7 +1127,9 @@
       position: document.getElementById("logPosition")?.value || "",
       distance: document.getElementById("logDistance")?.value || "",
       depth: document.getElementById("logDepth")?.value || "",
-      current: document.getElementById("logCurrent")?.value || ""
+      current: document.getElementById("logCurrent")?.value || "",
+      targetGroup: document.getElementById("logTargetGroup")?.value || "",
+      baitStatus: document.getElementById("logBaitStatus")?.value || ""
     };
   }
 
@@ -1161,6 +1186,8 @@
     const topDistance = countTopFilled(successLogs.map(log => log.distance), "距離記録なし");
     const topDepth = countTopFilled(successLogs.map(log => log.depth), "タナ記録なし");
     const topCurrent = countTopFilled(successLogs.map(log => log.current), "潮流記録なし");
+    const topTargetGroup = countTopFilled(successLogs.map(log => log.targetGroup), "対象魚種記録なし");
+    const topBaitStatus = countTopFilled(successLogs.map(log => log.baitStatus), "ベイト記録なし");
     const topFish = countTopFilled(successLogs.map(log => log.fish || "記録なし"), "魚種記録なし");
     const topMemo = successLogs.map(log => log.memo).filter(Boolean).slice(0, 3);
 
@@ -1175,8 +1202,11 @@
         <div class="analysis-line">強い投入距離：${escapeHtml(topDistance)}</div>
         <div class="analysis-line">強いタナ：${escapeHtml(topDepth)}</div>
         <div class="analysis-line">強い潮の流れ：${escapeHtml(topCurrent)}</div>
+        <div class="analysis-line">強い対象魚種：${escapeHtml(topTargetGroup)}</div>
+        <div class="analysis-line">強いベイト状況：${escapeHtml(topBaitStatus)}</div>
         <div class="analysis-line">目立つ魚種記録：${escapeHtml(topFish)}</div>
         <div class="analysis-line">一言まとめ：${escapeHtml(spotName)}では「${escapeHtml(compactTopLabel(topPosition))} × ${escapeHtml(compactTopLabel(topDepth))} × ${escapeHtml(compactTopLabel(topMethod))}」がまず軸です。</div>
+        <div class="analysis-line">魚種軸：${escapeHtml(compactTopLabel(topTargetGroup))}狙いでは、ベイト${escapeHtml(compactTopLabel(topBaitStatus))}が参考です。</div>
         ${topMemo.length ? `<div class="analysis-line">参考メモ：${topMemo.map(escapeHtml).join(" / ")}</div>` : ""}
       </div>
     `;
@@ -1199,6 +1229,8 @@
     if (todayLike.distance && todayLike.distance === (log.distance || "")) score += 8;
     if (todayLike.depth && todayLike.depth === (log.depth || "")) score += 8;
     if (todayLike.current && todayLike.current === (log.current || "")) score += 8;
+    if (todayLike.targetGroup && todayLike.targetGroup === (log.targetGroup || "")) score += 5;
+    if (todayLike.baitStatus && todayLike.baitStatus === (log.baitStatus || "")) score += 4;
 
     score += getCatchCountFromResult(log) * 5;
     return score;
@@ -1227,7 +1259,7 @@
             <div class="analysis-line">${escapeHtml(item.log.date)}${item.log.time ? ` ${escapeHtml(item.log.time)}` : ""} / ${escapeHtml(spotRules[item.log.spot]?.name || item.log.spot)} / ${escapeHtml(item.log.timeBand)}</div>
             <div class="analysis-line">釣法：${escapeHtml(item.log.method)} / 結果：${escapeHtml(item.log.result)}</div>
             <div class="analysis-line">立ち位置：${escapeHtml(item.log.position || "- ")} / 距離：${escapeHtml(item.log.distance || "- ")} / タナ：${escapeHtml(item.log.depth || "- ")}</div>
-            <div class="analysis-line">潮流：${escapeHtml(item.log.current || "- ")}</div>
+            <div class="analysis-line">潮流：${escapeHtml(item.log.current || "- ")} / 対象魚種：${escapeHtml(item.log.targetGroup || "- ")} / ベイト：${escapeHtml(item.log.baitStatus || "- ")}</div>
             <div class="analysis-line">魚種：${escapeHtml(item.log.fish || "記録なし")}</div>
             <div class="analysis-line">メモ：${escapeHtml(item.log.memo || "- ")}</div>
           </div>
@@ -1248,12 +1280,13 @@
 
     const grouped = {};
     successLogs.forEach(log => {
-      const key = `${log.timeBand} / ${log.method} / ${log.position || "位置不明"} / ${log.depth || "タナ不明"}`;
-      if (!grouped[key]) grouped[key] = { count: 0, fish: [], distance: [], current: [] };
+      const key = `${log.timeBand} / ${log.method} / ${log.position || "位置不明"} / ${log.depth || "タナ不明"} / ${log.targetGroup || "対象不明"}`;
+      if (!grouped[key]) grouped[key] = { count: 0, fish: [], distance: [], current: [], bait: [] };
       grouped[key].count += 1;
       if (log.fish) grouped[key].fish.push(log.fish);
       if (log.distance) grouped[key].distance.push(log.distance);
       if (log.current) grouped[key].current.push(log.current);
+      if (log.baitStatus) grouped[key].bait.push(log.baitStatus);
     });
 
     const patterns = Object.entries(grouped)
@@ -1262,7 +1295,8 @@
         count: value.count,
         fishTop: countTopFilled(value.fish, "記録なし"),
         distanceTop: countTopFilled(value.distance, "距離記録なし"),
-        currentTop: countTopFilled(value.current, "潮流記録なし")
+        currentTop: countTopFilled(value.current, "潮流記録なし"),
+        baitTop: countTopFilled(value.bait, "ベイト記録なし")
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
@@ -1277,6 +1311,7 @@
             <div class="analysis-line">代表魚種：${escapeHtml(pattern.fishTop)}</div>
             <div class="analysis-line">強い距離：${escapeHtml(pattern.distanceTop)}</div>
             <div class="analysis-line">強い潮流：${escapeHtml(pattern.currentTop)}</div>
+            <div class="analysis-line">強いベイト状況：${escapeHtml(pattern.baitTop)}</div>
           </div>
         `).join("")}
       </div>
@@ -2905,6 +2940,8 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
     document.getElementById("logCurrent").value = "";
     document.getElementById("logFishSpecies").value = "";
     document.getElementById("logFishSize").value = "";
+    document.getElementById("logTargetGroup").value = "";
+    document.getElementById("logBaitStatus").value = "";
     document.getElementById("logMemo").value = "";
     document.getElementById("logAutoSunrise").value = "";
     document.getElementById("logAutoSunset").value = "";
@@ -2932,6 +2969,8 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
     const current = document.getElementById("logCurrent").value;
     const fishSpecies = document.getElementById("logFishSpecies").value;
     const fishSize = document.getElementById("logFishSize").value.trim();
+    const targetGroup = document.getElementById("logTargetGroup").value;
+    const baitStatus = document.getElementById("logBaitStatus").value;
     const memo = document.getElementById("logMemo").value.trim();
 
     const sunrise = document.getElementById("logAutoSunrise").value || "";
@@ -2953,7 +2992,7 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
       spotName: spotRules[spot]?.name || "星賀漁港",
       timeBand, method, result,
       position, distance, depth, current,
-      fishSpecies, fishSize, fish,
+      fishSpecies, fishSize, fish, targetGroup, baitStatus,
       sunrise, sunset, mazume,
       highTideDiff, lowTideDiff,
       tideName, tideRange,
@@ -3015,6 +3054,8 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
       if (log.distance) lines.push(`投入距離：${log.distance}`);
       if (log.depth) lines.push(`タナ：${log.depth}`);
       if (log.current) lines.push(`潮の流れ：${log.current}`);
+      if (log.targetGroup) lines.push(`対象魚種：${log.targetGroup}`);
+      if (log.baitStatus) lines.push(`ベイト状況：${log.baitStatus}`);
       if (log.mazume) lines.push(`まずめ：${log.mazume}`);
       if (log.tideName || log.tideRange) lines.push(`潮：${[log.tideName, log.tideRange].filter(Boolean).join(" / ")}`);
       if (log.windDir || log.windSpeed) lines.push(`風：${[log.windDir, log.windSpeed].filter(Boolean).join(" / ")}`);
