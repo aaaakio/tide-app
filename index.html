@@ -411,6 +411,7 @@
       <div class="stat">
         <div class="k">総合おすすめ</div>
         <div class="v" id="liveMethod">未計算</div>
+      </div>
       <div class="stat">
         <div class="k">日の出</div>
         <div class="v" id="liveSunrise">未取得</div>
@@ -426,11 +427,10 @@
       <div class="stat">
         <div class="k">夕まずめ</div>
         <div class="v" id="liveEveningMazume">未計算</div>
-      </div>  
+      </div>
       <div class="stat">
-  <div class="k">現在のまずめ</div>
-  <div class="v" id="liveMazumeNow">未判定</div>
-</div>  
+        <div class="k">現在のまずめ</div>
+        <div class="v" id="liveMazumeNow">未判定</div>
       </div>
     </div>
     <div class="status" id="liveDataNote">潮差は MSIL、満潮干潮は JMA、天気・風・気温は Open-Meteo Weather、水温は Open-Meteo Marine から取得します。</div>
@@ -777,7 +777,13 @@
     tempDiffText: "昨日比 データなし",
     weatherCurrent: null,
     weatherWeek: [],
-    airTempCurrent: null
+    airTempCurrent: null,
+    sunTimes: {
+      sunrise: "未取得",
+      sunset: "未取得",
+      morningMazume: "未計算",
+      eveningMazume: "未計算"
+    }
   };
 
   function initVersionTexts() {
@@ -1877,14 +1883,6 @@ function getNowMinutes() {
 }
 
 function judgeMazumeNow(sunTimes) {
-  //
-function getMazumeBonus(sunTimes) {
-  const mazumeNow = judgeMazumeNow(sunTimes);
-
-  if (mazumeNow === "朝まずめ中") return 0.5;
-  if (mazumeNow === "夕まずめ中") return 1.0;
-  return 0;
-}  
   const nowMin = getNowMinutes();
 
   const sunriseMin = hmToMinutes(sunTimes?.sunrise);
@@ -1916,6 +1914,14 @@ function getMazumeBonus(sunTimes) {
   }
 
   return "未判定";
+}
+
+function getMazumeBonus(sunTimes) {
+  const mazumeNow = judgeMazumeNow(sunTimes);
+
+  if (mazumeNow === "朝まずめ中") return 0.5;
+  if (mazumeNow === "夕まずめ中") return 1.0;
+  return 0;
 }
 
 function scoreFishSpecies(spot, evalResult, tideDay, ai) {
@@ -2380,20 +2386,19 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
       timeBand
     });
 
-const mazumeBonus = getMazumeBonus(liveState.sunTimes);
-result.overall.score += mazumeBonus;
+    const mazumeBonus = getMazumeBonus(liveState.sunTimes);
+    result.overall.score += mazumeBonus;
+    result.overall.stars = scoreToStars(result.overall.score);
+    result.overall.starText = makeStarText(result.overall.stars);
 
-result.overall.stars = scoreToStars(result.overall.score);
-result.overall.starText = makeStarText(result.overall.stars);
+    const mazumeLabelObj = scoreToOverallLabel(result.overall.score);
+    result.overall.label = mazumeLabelObj.text;
+    result.overall.cls = mazumeLabelObj.cls;
 
-const mazumeLabelObj = scoreToOverallLabel(result.overall.score);
-result.overall.label = mazumeLabelObj.text;
-result.overall.cls = mazumeLabelObj.cls;
+    if (mazumeBonus > 0) {
+      result.comments.unshift(`まずめ補正 +${mazumeBonus}`);
+    }
 
-if (mazumeBonus > 0) {
-  result.comments.unshift(`まずめ補正 +${mazumeBonus}`);
-}
-    
     if (applyTideTiming) {
       const tideTiming = getTideTimingBonus(spot, tideDay);
       result.overall.score += tideTiming.bonus;
