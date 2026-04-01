@@ -2897,9 +2897,33 @@ function scoreFishSpecies(spot, evalResult, tideDay, ai) {
 // ===== Ver.3.2.4 バックアップ機能 =====
 function exportLogsToText() {
   const logs = getLogs();
-  const text = JSON.stringify(logs, null, 2);
-  document.getElementById("backupArea").value = text;
-  alert("バックアップを表示しました");
+
+  const backupData = {
+    app: "tide-app",
+    version: APP_VERSION,
+    exportedAt: new Date().toISOString(),
+    count: logs.length,
+    logs: logs
+  };
+
+  const text = JSON.stringify(backupData, null, 2);
+
+  const backupArea = document.getElementById("backupArea");
+  if (backupArea) {
+    backupArea.value = text;
+  }
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        alert(`バックアップを表示し、クリップボードにもコピーしました。\n件数: ${logs.length}件`);
+      })
+      .catch(() => {
+        alert(`バックアップを表示しました。\n件数: ${logs.length}件\n必要なら手動でコピーしてください。`);
+      });
+  } else {
+    alert(`バックアップを表示しました。\n件数: ${logs.length}件\n必要なら手動でコピーしてください。`);
+  }
 }
 
 function importLogsFromText() {
