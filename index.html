@@ -364,6 +364,29 @@
     font-size:14px;
     line-height:1.8;
   }
+
+  .log-form-block{
+　  border:1px solid var(--line);
+  　border-radius:12px;
+  　padding:12px;
+  　background:#fbfcfe;
+}
+
+  .log-form-block h3{
+    margin-top:0;
+    margin-bottom:10px;
+    font-size:15px;
+}
+
+  #logPanelV34 textarea,
+  #logPanelV34 input,
+  #logPanelV34 select{
+    width:100%;
+}
+
+  #logPanelV34 .row button{
+    min-height:44px;
+}
 </style>
 </head>
 <body>
@@ -550,12 +573,22 @@
     <div class="week-grid" id="weekBox"></div>
   </div>
 
-  <div class="panel">
-    <h2>釣果ログ</h2>
-    <div class="grid3">
+  <div class="panel" id="logPanelV34">
+  <h2>釣果ログ Ver.3.4</h2>
+  <div class="small" style="margin-bottom:10px;">
+    釣行中の簡易入力にも、釣行後のまとめ入力にも対応するため、選択式中心にしています。
+  </div>
+
+  <div class="log-form-block">
+    <h3>1. 基本情報</h3>
+    <div class="grid2">
       <div>
         <label class="small">日付</label>
         <input type="date" id="logDate" />
+      </div>
+      <div>
+        <label class="small">時刻</label>
+        <input type="time" id="logTime" />
       </div>
       <div>
         <label class="small">場所</label>
@@ -567,12 +600,19 @@
       <div>
         <label class="small">時間帯</label>
         <select id="logTimeBand">
+          <option value="">自動判定または選択</option>
           <option value="朝">朝</option>
           <option value="昼">昼</option>
           <option value="夕">夕</option>
           <option value="夜">夜</option>
         </select>
       </div>
+    </div>
+  </div>
+
+  <div class="log-form-block" style="margin-top:14px;">
+    <h3>2. 実釣条件</h3>
+    <div class="grid2">
       <div>
         <label class="small">釣法</label>
         <select id="logMethod">
@@ -584,7 +624,7 @@
         </select>
       </div>
       <div>
-        <label class="small">釣果</label>
+        <label class="small">結果</label>
         <select id="logResult">
           <option value="釣れた">釣れた</option>
           <option value="反応あり">反応あり</option>
@@ -592,29 +632,168 @@
         </select>
       </div>
       <div>
-        <label class="small">サイズ・魚種</label>
-        <input type="text" id="logFish" placeholder="例：ネリゴ 38cm" />
+        <label class="small">立ち位置</label>
+        <select id="logPosition">
+          <option value="">選択してください</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="A先端">A先端</option>
+          <option value="B先端">B先端</option>
+          <option value="C港内側">C港内側</option>
+          <option value="その他">その他</option>
+        </select>
+      </div>
+      <div>
+        <label class="small">投入距離</label>
+        <select id="logDistance">
+          <option value="">選択してください</option>
+          <option value="足元">足元</option>
+          <option value="5m">5m</option>
+          <option value="10m">10m</option>
+          <option value="15m">15m</option>
+          <option value="20m">20m</option>
+          <option value="30m以上">30m以上</option>
+        </select>
+      </div>
+      <div>
+        <label class="small">タナ</label>
+        <select id="logDepth">
+          <option value="">選択してください</option>
+          <option value="表層">表層</option>
+          <option value="1〜2m">1〜2m</option>
+          <option value="3〜4m">3〜4m</option>
+          <option value="5〜6m">5〜6m</option>
+          <option value="底付近">底付近</option>
+          <option value="底から1m">底から1m</option>
+          <option value="底から2m">底から2m</option>
+        </select>
+      </div>
+      <div>
+        <label class="small">潮の流れ</label>
+        <select id="logCurrent">
+          <option value="">選択してください</option>
+          <option value="左→右">左→右</option>
+          <option value="右→左">右→左</option>
+          <option value="沖→港内">沖→港内</option>
+          <option value="港内→沖">港内→沖</option>
+          <option value="当て潮">当て潮</option>
+          <option value="払い出し">払い出し</option>
+          <option value="ほぼ止まり">ほぼ止まり</option>
+          <option value="不明">不明</option>
+        </select>
       </div>
     </div>
+  </div>
 
-    <div style="margin-top:10px;">
-      <label class="small">メモ</label>
-      <textarea id="logMemo" rows="3" placeholder="ベイト、海面、風、立ち位置など"></textarea>
+  <div class="log-form-block" style="margin-top:14px;">
+    <h3>3. 釣果情報</h3>
+    <div class="grid2">
+      <div>
+        <label class="small">魚種</label>
+        <select id="logFishSpecies">
+          <option value="">選択してください</option>
+          <option value="ネリゴ">ネリゴ</option>
+          <option value="ヤズ">ヤズ</option>
+          <option value="ハマチ">ハマチ</option>
+          <option value="ヒラマサ">ヒラマサ</option>
+          <option value="サゴシ">サゴシ</option>
+          <option value="アジ">アジ</option>
+          <option value="その他">その他</option>
+        </select>
+      </div>
+      <div>
+        <label class="small">サイズ</label>
+        <input type="text" id="logFishSize" placeholder="例：38cm / 40〜45cm" />
+      </div>
+    </div>
+  </div>
+
+  <div class="log-form-block" style="margin-top:14px;">
+    <h3>4. 自動補完情報</h3>
+    <div class="grid2">
+      <div>
+        <label class="small">日の出</label>
+        <input type="text" id="logAutoSunrise" placeholder="自動補完" readonly />
+      </div>
+      <div>
+        <label class="small">日の入り</label>
+        <input type="text" id="logAutoSunset" placeholder="自動補完" readonly />
+      </div>
+      <div>
+        <label class="small">まずめ状態</label>
+        <input type="text" id="logAutoMazume" placeholder="自動補完" readonly />
+      </div>
+      <div>
+        <label class="small">満潮前後何分</label>
+        <input type="text" id="logAutoHighTideDiff" placeholder="自動補完" readonly />
+      </div>
+      <div>
+        <label class="small">干潮前後何分</label>
+        <input type="text" id="logAutoLowTideDiff" placeholder="自動補完" readonly />
+      </div>
+      <div>
+        <label class="small">潮名</label>
+        <input type="text" id="logAutoTideName" placeholder="自動補完" readonly />
+      </div>
+      <div>
+        <label class="small">潮差</label>
+        <input type="text" id="logAutoTideRange" placeholder="自動補完" readonly />
+      </div>
+      <div>
+        <label class="small">風向</label>
+        <input type="text" id="logAutoWindDir" placeholder="自動補完" readonly />
+      </div>
+      <div>
+        <label class="small">風速</label>
+        <input type="text" id="logAutoWindSpeed" placeholder="自動補完" readonly />
+      </div>
+      <div>
+        <label class="small">気温</label>
+        <input type="text" id="logAutoAirTemp" placeholder="自動補完" readonly />
+      </div>
+      <div>
+        <label class="small">水温</label>
+        <input type="text" id="logAutoWaterTemp" placeholder="自動補完" readonly />
+      </div>
+    </div>
+  </div>
+
+  <div class="log-form-block" style="margin-top:14px;">
+    <h3>5. メモ</h3>
+    <div>
+      <label class="small">自由メモ</label>
+      <textarea id="logMemo" rows="4" placeholder="ベイト、海面の様子、風の体感、周囲の釣れ方、補足など"></textarea>
+    </div>
+  </div>
+
+  <div class="log-form-block" style="margin-top:14px;">
+    <h3>6. 操作</h3>
+    <div class="row">
+      <button id="fillAutoLogBtn" class="secondary">自動補完を反映</button>
+      <button id="saveLogBtn">釣果ログを保存</button>
+      <button id="clearLogFormBtn" class="secondary">入力クリア</button>
+      <button id="clearLogBtn" class="secondary">全ログ削除</button>
     </div>
 
     <div class="row" style="margin-top:10px;">
-      <button id="saveLogBtn">釣果ログを保存</button>
-      <button id="clearLogBtn" class="secondary">全ログ削除</button>
       <button id="debugStorageBtn" class="secondary">保存領域診断</button>
       <button id="exportLogBtn" class="secondary">📤バックアップ</button>
       <button id="importLogBtn" class="secondary">📥復元</button>
-<textarea id="backupArea" placeholder="ここにバックアップが表示 / ここに貼り付けて復元"></textarea>
     </div>
 
-    <div class="status">保存先はこのブラウザ内です。まずは自分専用ログとして使います。</div>
-    <div id="debugStorageBox" class="debug-box small"></div>
-    <div style="margin-top:12px;" id="logList"></div>
+    <div style="margin-top:10px;">
+      <textarea id="backupArea" rows="5" placeholder="ここにバックアップが表示 / ここに貼り付けて復元"></textarea>
+    </div>
   </div>
+
+  <div class="status">
+    保存先はこのブラウザ内です。Ver.3.4 では「後から見返して再現できる記録」を重視します。
+  </div>
+
+  <div id="debugStorageBox" class="debug-box small"></div>
+  <div style="margin-top:12px;" id="logList"></div>
+</div>
   
     <div class="panel" id="analysisPanel">
     <h2>釣果ログ分析 Ver.3.3</h2>
